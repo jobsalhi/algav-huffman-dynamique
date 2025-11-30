@@ -1,13 +1,7 @@
-# (Ayoub) Implémentera la logique de la classe NodeBase.
+"""Nœud de base (Ayoub)."""
 
-class NodeBase:
-    """Classe de base pour les nœuds de l'arbre Huffman dynamique.
-    Attributs:
-        - weight: poids (fréquence cumulée)
-        - parent: référence vers le parent
-        - id: identifiant GDBH (numérotation de l'arbre)
-    """
-    # (Ayoub) à implémenter
+class NodeBase:  # (Ayoub)
+    """Nœud générique: poids, parent, id."""
     def __init__(self, weight=0):
         self.weight = weight
         self.parent = None

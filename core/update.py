@@ -1,29 +1,22 @@
-# (Ayoub) Implémentera tout l'algorithme de mise à jour (incrémentation, finBloc, échanges).
+"""Mise à jour arbre (Ayoub)."""
 
-class TreeUpdater:
-    """Gestion des mises à jour de l'arbre Huffman dynamique.
-    Méthodes à implémenter:
-        - modification(symbol)
-        - traitement(node)
-        - finBloc(node)
-        - swap_nodes(a, b)
-    """
-    # (Ayoub) à implémenter intégralement
+class TreeUpdater:  # (Ayoub)
+    """Algorithmes de mise à jour à implémenter."""
     def __init__(self, tree):
         self.tree = tree
 
     def modification(self, symbol):
-        """Met à jour l'arbre après apparition d'un symbole."""
+        """MAJ après symbole."""
         pass
 
     def traitement(self, node):
-        """Traitement standard (incrément / éventuels échanges)."""
+        """Traitement standard."""
         pass
 
     def finBloc(self, node):
-        """Gestion de la fin de bloc pour réordonnancement si nécessaire."""
+        """Fin de bloc."""
         pass
 
     def swap_nodes(self, a, b):
-        """Échange deux nœuds selon les règles de l'algorithme."""
+        """Échange deux nœuds."""
         pass

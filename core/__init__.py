@@ -1,7 +1,5 @@
-"""Structures principales de Huffman dynamique.
-(Ayoub / Maelys)
-Ce module expose les classes de base du projet.
-"""
+"""Structures Huffman dynamique (squelettes).
+(Ayoub / Maelys)"""
 
 from .node_base import NodeBase  # (Ayoub)
 from .leaf_node import LeafNode  # (Maelys)
