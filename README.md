@@ -13,9 +13,9 @@ Le projet inclut :
 
 ---
 
-## ✔️ Checklist d’avancement
+## Checklist d’avancement
 
-### 🔧 Implémentation
+### Implémentation
 - [ ] Structure de l’arbre (nœuds, parent/children)
 - [ ] Numérotation GDBH
 - [ ] Incrémentation + finBloc
@@ -24,7 +24,7 @@ Le projet inclut :
 - [ ] encode_symbol()
 - [ ] decode_next_symbol()
 
-### 📂 I/O & Scripts
+### I/O & Scripts
 - [ ] Lecture UTF-8
 - [ ] Écriture binaire (padding)
 - [ ] Lecture binaire bit-à-bit
@@ -33,13 +33,13 @@ Le projet inclut :
 - [ ] compression.txt
 - [ ] decompression.txt
 
-### 🧪 Tests & Analyse
+### Tests & Analyse
 - [ ] Tests simples (round-trip)
 - [ ] Expériences (Gutenberg)
 - [ ] Fichiers aléatoires
 - [ ] Fichiers non-naturels (.json, .py, …)
 
-### 📄 Rapport & Présentation
+### Rapport & Présentation
 - [ ] Rapport (~10 pages)
 - [ ] Analyse expérimentale
 - [ ] Section “usage d’IA générative”
