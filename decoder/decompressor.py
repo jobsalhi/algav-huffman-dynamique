@@ -6,7 +6,7 @@ gère NYT vs codes connus, met à jour l'arbre, et écrit la sortie UTF-8.
 
 from pathlib import Path
 from core.tree import DynamicHuffmanTree
-from  utils.bitreader import lecture
+from utils.bitreader import lecture
 
 # TODO: ajouter des fonctions utilitaires (ex: read_next_symbol_bits, read_utf8_bytes)
 
