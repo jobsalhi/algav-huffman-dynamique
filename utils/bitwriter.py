@@ -1,20 +1,24 @@
 """Écriture de bits dans un fichier binaire (version fonctions)."""
 
-def write_bits_to_file(bits: str, filepath: str):
+def ecriture(filepath1: str, filepath2: str):
     """
-    Écrit une chaîne de bits dans un fichier binaire.
-    TODO :
-    - Regrouper par blocs de 8 bits
-    - Convertir chaque bloc en entier (0-255)
-    - Écrire dans le fichier
-    - Compléter le dernier bloc avec des '0' si nécessaire
+    Écrit une chaîne de bits contenue dans un fichier fichier dans un fichier binaire.
     """
-    pass
+    with open(filepath1, 'r') as f1:
+        bits = f1.read().strip()
 
-def append_bits(buffer: str, bits: str) -> str:
-    """
-    Ajoute des bits à un buffer existant.
-    TODO :
-    - Retourner buffer + bits
-    """
-    pass
+    if len(bits) % 8 != 0:
+        bits += '0' * (8 - len(bits) % 8)
+
+    bytes_out = bytearray()
+    for i in range(0, len(bits), 8):
+        byte_str = bits[i:i+8]
+        byte_val = int(byte_str, 2)
+        bytes_out.append(byte_val)
+
+    with open(filepath2, 'wb') as f2:
+        f2.write(bytes_out)
+
+    print(bits)
+
+ecriture("fichier_chaine.txt", "fichier.bin")
