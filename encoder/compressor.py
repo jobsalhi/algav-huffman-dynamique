@@ -7,7 +7,7 @@ met à jour l'arbre dynamique et écrit les bits via `BitWriter`.
 from pathlib import Path
 from typing import Iterable
 from core.dynamic_huffman_tree import DynamicHuffmanTree
-from utils.bitwriter import BitWriter
+from utils.bitwriter import ecriture
 
 # TODO: ajouter des fonctions utilitaires (ex: get_code_for_symbol, write_utf8)
 
