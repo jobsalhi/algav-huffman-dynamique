@@ -6,7 +6,7 @@ gère NYT vs codes connus, met à jour l'arbre, et écrit la sortie UTF-8.
 
 from pathlib import Path
 from core.tree import DynamicHuffmanTree
-from utils.bitreader import BitReader
+from  utils.bitreader import lecture
 
 # TODO: ajouter des fonctions utilitaires (ex: read_next_symbol_bits, read_utf8_bytes)
 
@@ -21,6 +21,6 @@ def decode_file(input_path: str | Path, output_path: str | Path) -> None:
     - fermer les ressources
     """
     tree = DynamicHuffmanTree()
-    reader = BitReader(input_path)
+    reader = lecture(input_path)
     # ouvrir ressources, itérer, etc.
     pass
