@@ -23,6 +23,6 @@ def encode_file(input_path: str | Path, output_path: str | Path) -> None:
     """
     # Squelette: pas de logique réelle pour l'instant
     tree = DynamicHuffmanTree()
-    writer = BitWriter(output_path)
+    writer = ecriture(output_path)
     # ouvrir ressources, itérer, etc.
     pass
