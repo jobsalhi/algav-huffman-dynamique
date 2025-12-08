@@ -1,11 +1,9 @@
 """Algorithme de mise à jour (FGK/Vitter) pour Huffman dynamique.
-Squelette fonctionnel : uniquement signatures et TODO, pas d'implémentation.
 """
 
 from .leaf_node import LeafNode
 from .internal_node import InternalNode
 from .node_base import NodeBase
-
 # Entrée principale
 
 def update_tree(tree, symbol):
@@ -16,27 +14,41 @@ def update_tree(tree, symbol):
     - Déclencher le traitement (incréments, fin de bloc, swaps) jusqu'à la racine
     """
     pass
-
+    if symbol in tree.symbol_nodes:
+         node = tree.symbol_nodes[symbol]
+    else:
+        node = insert_new_symbol(tree, symbol)
 # Cas d'insertion / mise à jour
 
-def insert_new_symbol(tree, symbol):
-    """Insérer un nouveau symbole via le nœud NYT.
-    TODO:
-    - Remplacer le NYT par un nœud interne + deux enfants
-    - Créer la feuille pour `symbol`
-    - Mettre à jour `tree.symbol_nodes` et `tree.NYT`
-    - Relier correctement parents/enfants
-    """
-    pass
+def insert_new_symbol(tree, symbol):   #correspond a modification(H,s) 
+    """Insérer un nouveau symbole via le nœud NYT."""
+    old_NYT = tree.NYT
+    leaf = LeafNode(symbol=symbol)
+    nyt_leaf = LeafNode(is_NYT=True)
+    int_node = InternalNode(nyt_leaf,leaf)
+    leaf.parent = int_node
+    nyt_leaf.parent = int_node
+    if old_NYT is tree.root :  ## si l'arbre est vide 
+        tree.root = int_node
+        int_node.parent = None
+
+    else:
+        parent = old_NYT.parent   #on prend le parent de NYT
+        if parent.left is old_NYT:   #si l'ancien # est a gauche  
+            parent.left = int_node
+        else:
+            parent.right = int_node   #si l'ancien # est a gauche 
+        int_node.parent = parent
+
+    tree.NYT = nyt_leaf
+    tree.symbol_nodes[symbol] = leaf 
+    return leaf
+
+
 
 
 def update_existing_symbol(tree, symbol):
-    """Mettre à jour lorsque le symbole existe déjà.
-    TODO:
-    - Retrouver la feuille via `tree.symbol_nodes[symbol]`
-    - Démarrer le traitement (incrément, finBloc, swap) sur le chemin vers la racine
-    """
-    pass
+    return tree.symbol_nodes[symbol]
 
 # Primitives de traitement
 
