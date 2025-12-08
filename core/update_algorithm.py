@@ -18,6 +18,10 @@ def update_tree(tree, symbol):
     else:
         node = insert_new_symbol(tree, symbol)
     pass
+
+
+    # node.weight+= 1 
+
 # Cas d'insertion / mise à jour
 
 def insert_new_symbol(tree, symbol):   #correspond a modification(H,s) 
@@ -51,11 +55,9 @@ def insert_new_symbol(tree, symbol):   #correspond a modification(H,s)
 # Primitives de traitement
 
 def increment_weight(node: NodeBase):
-    """Incrémenter le poids du nœud.
-    TODO:
-    - Augmenter `node.weight` de 1
-    """
-    pass
+    while node :
+        node.weight += 1
+        node = node.parent
 
 
 def find_block_leader(tree, node: NodeBase):
@@ -75,12 +77,38 @@ def swap_nodes(tree, a: NodeBase, b: NodeBase):
     pass
 
 
+
 def renumber_tree(tree):
-    """Renuméroter l'arbre (GDBH).
-    TODO:
-    - Recalculer les identifiants GDBH pour tous les nœuds
     """
-    pass
+    Assigne les numéros GDBH aux nœuds :
+    ordre = Gauche → Droite → Bas → Haut
+    i.e. on numérote d'abord les nœuds les plus profonds,
+    et pour un même niveau : de gauche à droite.
+    """
+    from collections import defaultdict, deque
+
+    # 1) BFS pour collecter les noeuds selon leur profondeur
+    depth_to_nodes = defaultdict(list)
+    queue = deque([(tree.root, 0)]) # on commance par le root
+    max_depth = 0
+
+    while queue:
+        node, depth = queue.popleft() 
+        depth_to_nodes[depth].append(node)
+        max_depth = max(max_depth, depth)
+
+        if getattr(node, "left", None):  #getattr(obj, attribute_name, default_value) 
+            queue.append((node.left, depth + 1))
+        if getattr(node, "right", None):
+            queue.append((node.right, depth + 1))
+
+    # 2) Numérotation GDBH : profondeur max → 0, gauche → droite
+    current_id = 1
+    for depth in range(max_depth, 0 - 1, -1):   # bas → haut
+        for node in depth_to_nodes[depth]:      # gauche → droite
+            node.id = current_id
+            current_id += 1
+
 
 
 def get_path_to_root(node: NodeBase):
