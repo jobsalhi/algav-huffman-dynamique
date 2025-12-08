@@ -99,3 +99,54 @@ T(n) = O(n) + O(n) = O(n)
 \]
 
 Avec `n ≤ 511`, renuméroter à chaque mise à jour reste très peu coûteux en pratique.
+
+###  Explication de `insert_new_symbol(tree, symbol)`
+
+Cette fonction correspond exactement au cas *« nouveau symbole »* décrit dans l’algorithme FGK (`Modification(H, s)`).
+
+Lorsqu’un symbole apparaît pour la première fois, il n’existe pas encore de feuille associée dans l’arbre. On utilise alors le nœud NYT (`Not Yet Transmitted`) pour insérer ce nouveau symbole.
+
+Logique étape par étape :
+
+1. **Récupération de l’ancien NYT**  
+	On commence par récupérer le nœud NYT courant (`old_NYT`). C’est ce nœud qui sera remplacé.
+
+2. **Création des nouveaux nœuds**  
+	On crée :
+	- une nouvelle *feuille* contenant le symbole (`leaf`),
+	- un *nouveau nœud NYT* (`nyt_leaf`),
+	- un *nœud interne* (`int_node`) qui aura comme enfants :
+	  - le nouveau NYT (à gauche),
+	  - la feuille du symbole (à droite).
+
+	Cela correspond à la transformation suivante :
+
+	Avant :
+
+	```
+		 # (NYT)
+	```
+
+	Après insertion du symbole `s` :
+
+	```
+		  (•)
+		 /   \
+	   #      s
+	```
+
+3. **Mise à jour des pointeurs parents**  
+	Les deux nouveaux enfants (`leaf` et `nyt_leaf`) pointent vers le nœud interne `int_node` comme parent.
+
+4. **Remplacement de l’ancien NYT dans l’arbre**  
+	- Si l’arbre ne contenait que le NYT (cas du tout premier symbole), le nœud interne devient la **nouvelle racine**.  
+	- Sinon, on remplace `old_NYT` par `int_node` dans son parent, à gauche ou à droite selon le cas.
+
+5. **Mise à jour du nouvel état de l’arbre**  
+	- Le nouveau NYT devient `tree.NYT` (pour les futures insertions).  
+	- La feuille contenant le symbole est ajoutée dans la table `tree.symbol_nodes` pour rendre les recherches futures en **O(1)**.
+
+6. **Retour de la feuille du symbole**  
+	La fonction renvoie la feuille `leaf`. Cela permet à `update_tree` de commencer ensuite le traitement FGK (incréments, `finBloc`, échanges) à partir de cette nouvelle feuille.
+
+En résumé, `insert_new_symbol` transforme le nœud NYT en un petit sous-arbre : **nœud interne + nouvelle feuille + nouveau NYT**. C’est exactement ce qui est requis par l’algorithme de Huffman dynamique pour que le nouveau symbole soit intégré et puisse ensuite participer aux mises à jour de l’arbre.
