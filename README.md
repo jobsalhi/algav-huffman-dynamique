@@ -17,7 +17,7 @@ Le projet inclut :
 
 ### Implémentation
 - [x] Structure de l’arbre (nœuds, parent/children)
-- [ ] Numérotation GDBH
+- [x] Numérotation GDBH
 - [ ] Incrémentation + finBloc
 - [ ] Échanges de nœuds
 - [ ] Gestion du symbole spécial (#)
@@ -25,9 +25,9 @@ Le projet inclut :
 - [ ] decode_next_symbol()
 
 ### I/O & Scripts
-- [ ] Lecture UTF-8
-- [ ] Écriture binaire (padding)
-- [ ] Lecture binaire bit-à-bit
+- [x] Lecture UTF-8
+- [x] Écriture binaire (padding)
+- [x] Lecture binaire bit-à-bit
 - [ ] Script `compresser`
 - [ ] Script `decompresser`
 - [ ] compression.txt

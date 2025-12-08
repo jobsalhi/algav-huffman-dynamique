@@ -54,11 +54,6 @@ def insert_new_symbol(tree, symbol):   #correspond a modification(H,s)
 
 # Primitives de traitement
 
-def increment_weight(node: NodeBase):
-    while node :
-        node.weight += 1
-        node = node.parent
-
 
 def find_block_leader(tree, node: NodeBase):
     """Trouver le chef de bloc pour le poids de `node`.
@@ -108,20 +103,3 @@ def renumber_tree(tree):
         for node in depth_to_nodes[depth]:      # gauche → droite
             node.id = current_id
             current_id += 1
-
-
-
-def get_path_to_root(node: NodeBase):
-    """Obtenir le chemin `node -> ... -> root`.
-    TODO:
-    - Remonter via `parent` jusqu'à la racine et retourner la liste
-    """
-    pass
-
-
-def is_incrementable(node: NodeBase):
-    """Tester la condition d'incrémentabilité locale.
-    TODO:
-    - Vérifier `node.parent` et comparer `node.weight < parent.weight`
-    """
-    pass
