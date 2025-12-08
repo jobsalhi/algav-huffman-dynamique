@@ -13,11 +13,11 @@ def update_tree(tree, symbol):
     - Appeler `insert_new_symbol(tree, symbol)` ou `update_existing_symbol(tree, symbol)`
     - Déclencher le traitement (incréments, fin de bloc, swaps) jusqu'à la racine
     """
-    pass
     if symbol in tree.symbol_nodes:
          node = tree.symbol_nodes[symbol]
     else:
         node = insert_new_symbol(tree, symbol)
+    pass
 # Cas d'insertion / mise à jour
 
 def insert_new_symbol(tree, symbol):   #correspond a modification(H,s) 
@@ -47,8 +47,6 @@ def insert_new_symbol(tree, symbol):   #correspond a modification(H,s)
 
 
 
-def update_existing_symbol(tree, symbol):
-    return tree.symbol_nodes[symbol]
 
 # Primitives de traitement
 

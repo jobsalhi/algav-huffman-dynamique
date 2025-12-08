@@ -1,10 +1,8 @@
-"""Base node for Dynamic Huffman tree.
-TODO: keep minimal; actual logic later.
-"""
+"""Nœud de base (Ayoub)."""
 
-class NodeBase:
-    """Common fields: weight, parent, id (GDBH)."""
-    def __init__(self, weight: int = 0):
+class NodeBase:  # (Ayoub)
+    """Nœud générique: poids, parent, id. -> structure partager par les feuilles et neuds internes """
+    def __init__(self, weight=0):
         self.weight = weight
         self.parent = None
-        self.id = None  # GDBH number
+        self.id = None

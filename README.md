@@ -16,7 +16,7 @@ Le projet inclut :
 ## Checklist d’avancement
 
 ### Implémentation
-- [ ] Structure de l’arbre (nœuds, parent/children)
+- [x] Structure de l’arbre (nœuds, parent/children)
 - [ ] Numérotation GDBH
 - [ ] Incrémentation + finBloc
 - [ ] Échanges de nœuds
