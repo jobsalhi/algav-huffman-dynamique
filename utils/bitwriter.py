@@ -1,24 +1,42 @@
 """Écriture de bits dans un fichier binaire (version fonctions)."""
+import os
 
-def ecriture(filepath1: str, filepath2: str):
+# Chemin du dossier où se trouve ce script
+BASE_DIR = os.path.dirname(__file__)
+
+def ecriture(fichier_chaine: str, fichier_bin: str):
     """
-    Écrit une chaîne de bits contenue dans un fichier fichier dans un fichier binaire.
+    Lit un fichier textuel contenant une chaîne de bits ("010101...")
+    et écrit un fichier binaire en regroupant les bits par octets.
     """
+
+    # Chemins absolus
+    filepath1 = os.path.join(BASE_DIR, fichier_chaine)
+    filepath2 = os.path.join(BASE_DIR, fichier_bin)
+
+    # Lire la chaîne de bits
     with open(filepath1, 'r') as f1:
-        bits = f1.read().strip()
+        original_bits = f1.read().strip()
 
+    bits = original_bits  # copie
+
+    # Compléter les bits pour un multiple de 8
     if len(bits) % 8 != 0:
         bits += '0' * (8 - len(bits) % 8)
 
+    # Conversion en octets
     bytes_out = bytearray()
     for i in range(0, len(bits), 8):
         byte_str = bits[i:i+8]
-        byte_val = int(byte_str, 2)
-        bytes_out.append(byte_val)
+        bytes_out.append(int(byte_str, 2))
 
+    # Écriture binaire
     with open(filepath2, 'wb') as f2:
         f2.write(bytes_out)
 
-    print(bits)
+    
+    print("Bits lus depuis le fichier TXT :", original_bits)
+    print("Bits écrits (avec padding)     :", bits)
+
 
 ecriture("fichier_chaine.txt", "fichier.bin")
