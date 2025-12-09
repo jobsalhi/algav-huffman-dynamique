@@ -3,40 +3,37 @@ from core.update_algorithm import update_tree
 from core.leaf_node import LeafNode
 
 
-def print_tree(node, prefix="", is_left=True):
-    """Affiche l'arbre de manière textuelle (poids + id + symbole/NYT)."""
+def print_tree(node, indent="", is_right=True):
+    """Affichage clair d'un arbre binaire tourné à 90°.
+    Le sous-arbre droit est affiché en haut, le gauche en bas.
+    """
+
     if node is None:
         return
 
-    connector = "└── " if is_left else "┌── "
+    # Afficher d'abord le fils droit
+    print_tree(getattr(node, "right", None), indent + "    ", True)
 
-    # Construire l'étiquette du nœud
-    label_parts = []
-
+    # Construire label lisible
     if isinstance(node, LeafNode):
         if getattr(node, "is_NYT", False):
-            label_parts.append("NYT")
+            label = f"NYT"
         else:
-            label_parts.append(f"'{node.symbol}'")
+            label = f"'{node.symbol}'"
     else:
-        label_parts.append("*")  # nœud interne
+        label = "*"
 
-    label_parts.append(f"w={getattr(node, 'weight', '?')}")
-    label_parts.append(f"id={getattr(node, 'id', '?')}")
+    w = getattr(node, "weight", "?")
+    idx = getattr(node, "id", "?")
 
-    label = " ".join(label_parts)
-    print(prefix + connector + label)
+    connector = "┌──" if is_right else "└──"
+    print(f"{indent}{connector} {label} (w={w}, id={idx})")
 
-    child_prefix = prefix + ("    " if is_left else "│   ")
-
-    if getattr(node, "left", None) is not None:
-        print_tree(node.left, child_prefix, True)
-    if getattr(node, "right", None) is not None:
-        print_tree(node.right, child_prefix, False)
+    # Afficher fils gauche
+    print_tree(getattr(node, "left", None), indent + "    ", False)
 
 
 def print_full_tree(tree, title=""):
-    """Affiche la racine et appelle print_tree sur ses enfants."""
     print("\n" + "=" * 60)
     if title:
         print(title)
@@ -47,26 +44,7 @@ def print_full_tree(tree, title=""):
         print("=" * 60)
         return
 
-    root = tree.root
-    label_parts = []
-
-    if isinstance(root, LeafNode):
-        if getattr(root, "is_NYT", False):
-            label_parts.append("NYT")
-        else:
-            label_parts.append(f"'{root.symbol}'")
-    else:
-        label_parts.append("*")
-
-    label_parts.append(f"w={getattr(root, 'weight', '?')}")
-    label_parts.append(f"id={getattr(root, 'id', '?')}")
-    print("ROOT:", " ".join(label_parts))
-
-    if getattr(root, "left", None) is not None:
-        print_tree(root.left, "", True)
-    if getattr(root, "right", None) is not None:
-        print_tree(root.right, "", False)
-
+    print_tree(tree.root)
     print("=" * 60)
 
 
