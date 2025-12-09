@@ -1,6 +1,8 @@
-# Algorithme de Mise à Jour 
+Mise à jour complète du .md (à copier directement)
 
-### Renumérotation GDBH de l’arbre (`renumber_tree`)
+# Algorithme de Mise à Jour (FGK / Vitter)
+
+## Renumérotation GDBH de l’arbre (`renumber_tree`)
 
 ```python
 def renumber_tree(tree):
@@ -100,7 +102,7 @@ T(n) = O(n) + O(n) = O(n)
 
 Avec `n ≤ 511`, renuméroter à chaque mise à jour reste très peu coûteux en pratique.
 
-###  Explication de `insert_new_symbol(tree, symbol)`
+## Explication de `insert_new_symbol(tree, symbol)`
 
 Cette fonction correspond exactement au cas *« nouveau symbole »* décrit dans l’algorithme FGK (`Modification(H, s)`).
 
@@ -150,3 +152,159 @@ Logique étape par étape :
 	La fonction renvoie la feuille `leaf`. Cela permet à `update_tree` de commencer ensuite le traitement FGK (incréments, `finBloc`, échanges) à partir de cette nouvelle feuille.
 
 En résumé, `insert_new_symbol` transforme le nœud NYT en un petit sous-arbre : **nœud interne + nouvelle feuille + nouveau NYT**. C’est exactement ce qui est requis par l’algorithme de Huffman dynamique pour que le nouveau symbole soit intégré et puisse ensuite participer aux mises à jour de l’arbre.
+
+## Fonction `find_block_leader(tree, node)`
+
+Cette fonction implémente `finBloc(H, Q)` du cours :
+
+« Retourner le nœud du bloc (même poids) ayant l’indice GDBH maximal. »
+
+### Problème rencontré
+
+Lors des premières insertions, les `id` sont `None`.
+L’expression `n.id > leader.id` devient impossible.
+
+### Solution
+
+Traiter `id=None` comme `-1` :
+
+```python
+id_n = n.id if n.id is not None else -1
+id_leader = leader.id if leader.id is not None else -1
+
+if n.weight == target_weight and id_n > id_leader:
+	leader = n
+```
+
+### Complexité
+
+- BFS → O(n)
+- Sélection du max → O(n)
+
+Très faible en pratique.
+
+## Fonction `swap_nodes(tree, a, b)`
+
+Cette fonction est l’un des points délicats de FGK.
+Elle doit échanger deux nœuds dans l’arbre sans modifier leurs sous-arbres.
+
+### Règles du cours
+
+- Ne jamais échanger un nœud avec un ancêtre
+  (test fait dans `update_tree` avant d’appeler `swap_nodes`)
+- Mettre à jour uniquement les pointeurs parent / enfants
+- Cas particulier : deux nœuds sont frères
+- Cas particulier : l’un des nœuds est la racine
+
+### Cas 1 : `A` et `B` sont des frères
+
+Dans ce cas, le parent est le même.
+On échange simplement les pointeurs gauche/droite :
+
+```python
+if parentA is parentB:
+	if A_is_left:
+		parent.left = b
+		parent.right = a
+	else:
+		parent.left = a
+		parent.right = b
+	a.parent = parent
+	b.parent = parent
+	return
+```
+
+### Cas 2 : cas général
+
+On échange leurs parents respectifs :
+
+```python
+a.parent = parentB
+b.parent = parentA
+```
+
+Puis on remplace `A` par `B` chez `parentA`, et `B` par `A` chez `parentB`.
+
+### Cas 3 : racine
+
+Si un des nœuds était la racine :
+
+```python
+tree.root = l_autre
+```
+
+### Résultat
+
+Une opération de `swap` conserve l’arbre et respecte la structure FGK.
+
+## Fonction `is_ancestor(a, b)`
+
+Utilisée dans `update_tree` pour respecter la contrainte :
+
+« On n’échange jamais un nœud avec un de ses ancêtres. »
+
+```python
+def is_ancestor(a, b):
+	cur = b.parent
+	while cur is not None:
+		if cur is a:
+			return True
+		cur = cur.parent
+	return False
+```
+
+## Implémentation complète de `update_tree`
+
+Cette fonction implémente `Modification(H, s)` puis `Traitement(H, Q)` du cours.
+
+### Modification(H, s)
+
+- Si `s` n’est pas dans l’arbre → insertion via NYT
+- Sinon → on récupère la feuille du symbole déjà existant
+- On obtient ainsi un nœud `Q` à partir duquel commencer les mises à jour
+
+### Traitement(H, Q)
+
+Tant que `Q` n’est pas la racine :
+
+- Trouver `leader = finBloc(H, Q)`
+- Si `leader != Q` ET `leader` n’est pas un ancêtre → `swap_nodes`
+- Incrémenter `Q.weight`
+- Monter au parent (`Q = Q.parent`)
+
+À la fin → renumérotation GDBH.
+
+### Code final
+
+```python
+def update_tree(tree, symbol):
+	"""Implémente Modification(H,s) + Traitement(H,Q) du cours.
+	Met à jour l’arbre FGK après lecture d’un symbole.
+	"""
+
+	# 1) Cas nouveau symbole
+	if symbol not in tree.symbol_nodes:
+		Q = insert_new_symbol(tree, symbol)
+
+	# 2) Cas symbole déjà vu
+	else:
+		Q = tree.symbol_nodes[symbol]
+
+	# 3) Traitement FGK / Vitter
+	while Q is not None:
+
+		leader = find_block_leader(tree, Q)
+
+		# Échange possible uniquement si pas ancêtre
+		if leader is not Q and not is_ancestor(leader, Q):
+			swap_nodes(tree, leader, Q)
+
+		# Incrément
+		Q.weight += 1
+
+		# Remonter dans l’arbre
+		Q = Q.parent
+
+	# 4) Renumérotation finale
+	renumber_tree(tree)
+```
