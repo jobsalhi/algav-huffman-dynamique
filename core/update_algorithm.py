@@ -243,3 +243,15 @@ def is_ancestor(a, b):
             return True
         cur = cur.parent
     return False
+
+
+
+def get_adress(a) :
+    cur = a.parent
+    adress_cur =get_adress(cur)
+    if cur is not None :
+        if cur.left is a :
+            return adress_cur + "0"
+        else : 
+            return adress_cur + "1"
+        
