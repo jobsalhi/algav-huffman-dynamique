@@ -18,9 +18,9 @@ Le projet inclut :
 ### Implémentation
 - [x] Structure de l’arbre (nœuds, parent/children)
 - [x] Numérotation GDBH
-- [ ] Incrémentation + finBloc
-- [ ] Échanges de nœuds
-- [ ] Gestion du symbole spécial (#)
+- [x] Incrémentation + finBloc
+- [x] Échanges de nœuds
+- [x] Gestion du symbole spécial (#)
 - [ ] encode_symbol()
 - [ ] decode_next_symbol()
 
