@@ -13,14 +13,38 @@ def update_tree(tree, symbol):
     - Appeler `insert_new_symbol(tree, symbol)` ou `update_existing_symbol(tree, symbol)`
     - Déclencher le traitement (incréments, fin de bloc, swaps) jusqu'à la racine
     """
-    # if symbol in tree.symbol_nodes:
-    #      node = tree.symbol_nodes[symbol]
-    # else:
-    #     node = insert_new_symbol(tree, symbol)
-    # pass
 
+    # ------------------------------------------------------------
+    # 1) Cas 1 : symbole jamais vu → insertion via le NYT
+    if symbol not in tree.symbol_nodes:
+        # insère le symbole et retourne la nouvelle feuille
+        Q = insert_new_symbol(tree, symbol)
 
-    # node.weight+= 1 
+    # ------------------------------------------------------------
+    # 2) Cas 2 : symbole déjà présent → on récupère la feuille
+    else:
+        Q = tree.symbol_nodes[symbol]
+
+    # ------------------------------------------------------------
+    # 3) Algorithme de traitement (Traitement du cours)
+    while Q is not None:
+        
+        # Trouver le chef de bloc pour ce noeud
+        leader = find_block_leader(tree, Q)
+
+        # S'il faut échanger, et si l'échange est légal (pas d'ancêtre)
+        if leader is not Q and not is_ancestor(leader, Q):
+            swap_nodes(tree, leader, Q)
+
+        # Increment du poids du noeud courant
+        Q.weight += 1
+
+        # Monter au parent
+        Q = Q.parent
+
+    # ------------------------------------------------------------
+    # 4) Une fois tous les poids mis à jour → renumérotation GDBH
+    renumber_tree(tree)
 
 
 
@@ -71,8 +95,11 @@ def find_block_leader(tree, node):
     while queue:
         n = queue.popleft()
 
-        # on ne garde que les nœuds avec le même poids
-        if n.weight == target_weight and n.id > leader.id:
+        # On traite les ids None comme -1 pour éviter les erreurs au début
+        id_n = n.id if n.id is not None else -1
+        id_leader = leader.id if leader.id is not None else -1
+
+        if n.weight == target_weight and id_n > id_leader:
             leader = n
 
         # exploration classique
