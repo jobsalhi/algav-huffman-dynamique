@@ -50,7 +50,7 @@ def print_full_tree(tree, title=""):
 
 def main():
     tree = DynamicHuffmanTree()
-    sequence = "ABACA"
+    sequence = "carambarbcm"
 
     print_full_tree(tree, "État initial (seulement NYT)")
 
