@@ -22,6 +22,8 @@ def update_tree(tree, symbol):
 
     # node.weight+= 1 
 
+
+
 # Cas d'insertion / mise à jour
 
 def insert_new_symbol(tree, symbol):   #correspond a modification(H,s) 
@@ -127,7 +129,7 @@ def swap_nodes(tree, a, b):
     # ---------------------------------------------------------
     # CAS 1 : A et B sont des frères (même parent)
     # Dans ce cas on inverse simplement les fils gauche/droit
-    
+
     if parentA is parentB:
         parent = parentA  # même parent
 
@@ -202,3 +204,15 @@ def renumber_tree(tree):
         for node in depth_to_nodes[depth]:      # gauche → droite
             node.id = current_id
             current_id += 1
+
+
+
+
+def is_ancestor(a, b):
+    """Retourne True si 'a' est un ancêtre de 'b'."""
+    cur = b.parent
+    while cur is not None:
+        if cur is a:
+            return True
+        cur = cur.parent
+    return False
