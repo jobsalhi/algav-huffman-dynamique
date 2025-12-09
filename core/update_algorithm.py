@@ -108,13 +108,67 @@ def find_block_leader(tree, node):
 
 
 
-def swap_nodes(tree, a: NodeBase, b: NodeBase):
-    """Échanger deux nœuds selon GDBH.
-    TODO:
-    - Respecter la contrainte "pas d'échange avec un ancêtre"
-    - Mettre à jour parents/enfants
-    """
-    pass
+def swap_nodes(tree, a, b):
+    if a == b:
+        return  # rien à faire
+
+    # Vérifier si un des deux est la racine (important pour la mise à jour finale)
+    a_was_root = (tree.root is a)
+    b_was_root = (tree.root is b)
+
+    # Parents respectifs
+    parentA = a.parent
+    parentB = b.parent
+
+    # Déterminer si A ou B est un fils gauche (sinon c’est le fils droit)
+    A_is_left = (parentA and parentA.left is a)
+    B_is_left = (parentB and parentB.left is b)
+
+    # ---------------------------------------------------------
+    # CAS 1 : A et B sont des frères (même parent)
+    # Dans ce cas on inverse simplement les fils gauche/droit
+    
+    if parentA is parentB:
+        parent = parentA  # même parent
+
+        if A_is_left:
+            parent.left = b
+            parent.right = a
+        else:
+            parent.left = a
+            parent.right = b
+
+        # Mettre à jour les pointeurs parent même parent mais on réassigne proprement
+        a.parent = parent
+        b.parent = parent
+        return
+
+    # ---------------------------------------------------------
+    # CAS 2 : cas général (parents différents)
+
+    a.parent = parentB
+    b.parent = parentA
+
+    # Mise à jour immédiate de la racine si nécessaire
+    # doit être fait avant de modifier les enfants
+    if a_was_root:
+        tree.root = b
+    elif b_was_root:
+        tree.root = a
+
+    # Mettre à jour les enfants du parent d'origine de A
+    if parentA:
+        if A_is_left:
+            parentA.left = b
+        else:
+            parentA.right = b
+
+    # Mettre à jour les enfants du parent d'origine de B
+    if parentB:
+        if B_is_left:
+            parentB.left = a
+        else:
+            parentB.right = a
 
 
 
