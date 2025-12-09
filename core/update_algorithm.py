@@ -55,12 +55,57 @@ def insert_new_symbol(tree, symbol):   #correspond a modification(H,s)
 # Primitives de traitement
 
 
-def find_block_leader(tree, node: NodeBase):
-    """Trouver le chef de bloc pour le poids de `node`.
-    TODO:
-    - Identifier le nœud de même poids avec l'indice GDBH le plus élevé
+def find_block_leader(tree, node):
+    """Retourne le chef de bloc pour `node` :
+    parmi tous les nœuds de même poids, celui ayant l'id GDBH le plus élevé.
     """
-    pass
+    target_weight = node.weight
+    leader = node  # au minimum, le nœud lui-même
+
+    # BFS pour visiter tous les nœuds
+    from collections import deque
+    queue = deque([tree.root])
+
+    while queue:
+        n = queue.popleft()
+
+        # on ne garde que les nœuds avec le même poids
+        if n.weight == target_weight and n.id > leader.id:
+            leader = n
+
+        # exploration classique
+        if getattr(n, "left", None):
+            queue.append(n.left)
+        if getattr(n, "right", None):
+            queue.append(n.right)
+
+    return leader
+
+
+# -----------------------------------------------------------
+# NOTE (Ayoub): Tentative optimisation idea
+#
+# Hypothèse : faire un parcours BFS en priorité droite→gauche,
+# et retourner le premier nœud rencontré ayant le poids recherché.
+# Cela reproduit souvent l’ordre GDBH inverse dans de nombreux cas,
+# car l’arbre de Huffman dynamique garde une structure assez équilibrée.
+#
+# Exemple d’idée :
+#
+# queue = deque([tree.root])
+# while queue:
+#     n = queue.popleft()
+#     if n.weight == target_weight:
+#         return n
+#     if n.right: queue.append(n.right)
+#     if n.left:  queue.append(n.left)
+#
+# Statut : cette approche semble fonctionner sur de nombreux exemples,
+# mais n'est pas garantie par la théorie FGK. À tester plus tard avec
+# des séquences aléatoires pour comparer son comportement au finBloc exact.
+# -----------------------------------------------------------
+
+
 
 
 def swap_nodes(tree, a: NodeBase, b: NodeBase):
@@ -92,8 +137,8 @@ def renumber_tree(tree):
         depth_to_nodes[depth].append(node)
         max_depth = max(max_depth, depth)
 
-        if getattr(node, "left", None):  #getattr(obj, attribute_name, default_value) 
-            queue.append((node.left, depth + 1))
+        if getattr(node, "left", None):  #getattr(obj, attribute_name, default_value) # either it get the attribute and gives none back
+            queue.append((node.left, depth + 1)) # on utilise getattr car les feullies ont pas les attributes left et right donc ça pose des problems 
         if getattr(node, "right", None):
             queue.append((node.right, depth + 1))
 
