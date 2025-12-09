@@ -22,5 +22,27 @@ def decode_file(input_path: str | Path, output_path: str | Path) -> None:
     """
     tree = DynamicHuffmanTree()
     reader = lecture(input_path)
+    i = 0
     # ouvrir ressources, itérer, etc.
+    while i<len(reader):
+        i+=8
     pass
+
+def exists_in_tree(noeud,sequence : str):
+    """
+    noeud : Node
+    sequence : str de taille > 0
+    """
+    next = which_child(noeud, sequence[0])
+    if len(sequence) == 1 :
+        return isinstance(next, LeafNode)
+    elif isinstance(next, LeafNode) or next is None:
+        return False
+    else :
+        return exists_in_tree(next, sequence[1:])
+
+def which_child(noeud, bin):
+    if bin == 0:
+        return noeud.left
+    else : 
+        return noeud.right
