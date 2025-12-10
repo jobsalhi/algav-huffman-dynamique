@@ -1,0 +1,9 @@
+# Exemple de fichier "JSON" pour Q10 (mais avec extension .txt)
+# Données structurées : liste d'utilisateurs fictifs.
+
+[
+  {"id": 1, "name": "Alice", "roles": ["admin", "editor"], "active": true},
+  {"id": 2, "name": "Bob",   "roles": ["viewer"],          "active": false},
+  {"id": 3, "name": "Chloé", "roles": ["editor"],          "active": true},
+  {"id": 4, "name": "David", "roles": ["viewer", "export"],"active": true}
+]

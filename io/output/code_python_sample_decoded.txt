@@ -1,0 +1,28 @@
+from __future__ import annotations
+from dataclasses import dataclass
+from typing import List
+
+@dataclass
+class Point:
+    x: float
+    y: float
+
+
+def distance(p1: Point, p2: Point) -> float:
+    dx = p1.x - p2.x
+    dy = p1.y - p2.y
+    return (dx * dx + dy * dy) ** 0.5
+
+
+def polyline_length(points: List[Point]) -> float:
+    if len(points) < 2:
+        return 0.0
+    total = 0.0
+    for i in range(len(points) - 1):
+        total += distance(points[i], points[i + 1])
+    return total
+
+
+if __name__ == "__main__":
+    pts = [Point(0, 0), Point(1, 1), Point(2, 0)]
+    print(polyline_length(pts))
