@@ -1,0 +1,4 @@
+Ceci est un petit extrait de texte en français inspiré de Gutenberg.
+Il contient des phrases complètes, avec de la ponctuation, et des mots fréquents
+comme "le", "la", "de", "et" qui apparaissent très souvent.
+L'objectif est d'observer un bon taux de compression sur du texte naturel.

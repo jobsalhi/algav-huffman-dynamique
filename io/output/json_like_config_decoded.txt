@@ -1,0 +1,7 @@
+{
+  "service": "demo",
+  "retries": 3,
+  "timeout_ms": 1200,
+  "endpoints": ["/health", "/status", "/metrics"],
+  "features": {"dynamic_huffman": true, "debug": false}
+}
