@@ -4,111 +4,94 @@
 from .leaf_node import LeafNode
 from .internal_node import InternalNode
 from .node_base import NodeBase
+
 # Entrée principale
 
 def update_tree(tree, symbol):
-    """Mettre à jour l'arbre dynamique après lecture de `symbol`.
-    TODO:
-    - Déterminer si `symbol` est nouveau ou déjà présent
-    - Appeler `insert_new_symbol(tree, symbol)` ou `update_existing_symbol(tree, symbol)`
-    - Déclencher le traitement (incréments, fin de bloc, swaps) jusqu'à la racine
-    """
-
-    # ------------------------------------------------------------
-    # 1) Cas 1 : symbole jamais vu → insertion via le NYT
-    if symbol not in tree.symbol_nodes:
-        # insère le symbole et retourne la nouvelle feuille
-        Q = insert_new_symbol(tree, symbol)
-
-    # ------------------------------------------------------------
-    # 2) Cas 2 : symbole déjà présent → on récupère la feuille
+    """Mettre à jour l'arbre dynamique après lecture de `symbol`."""
+    
+    # 1. Gestion du symbole (Nouveau vs Existant)
+    if tree.contains(symbol):
+        # Cas simple : on récupère la feuille existante
+        q_node = tree.symbol_nodes[symbol]
     else:
-        Q = tree.symbol_nodes[symbol]
+        # Cas complexe : création d'une nouvelle feuille via NYT
+        q_node = insert_new_symbol(tree, symbol)
 
-    # ------------------------------------------------------------
-    # 3) Algorithme de traitement (Traitement du cours)
-    while Q is not None:
-        
-        # Trouver le chef de bloc pour ce noeud
-        leader = find_block_leader(tree, Q)
+    # 2. Algorithme de remontée et d'ajustement
+    while q_node is not None:
+        leader = find_block_leader(tree, q_node)
+        if leader is not q_node and not is_ancestor(leader, q_node):
+            swap_nodes(tree, leader, q_node)
+        q_node.weight += 1
+        q_node = q_node.parent
 
-        # S'il faut échanger, et si l'échange est légal (pas d'ancêtre)
-        if leader is not Q and not is_ancestor(leader, Q):
-            swap_nodes(tree, leader, Q)
-
-        # Increment du poids du noeud courant
-        Q.weight += 1
-
-        # Monter au parent
-        Q = Q.parent
-
-    # ------------------------------------------------------------
-    # 4) Une fois tous les poids mis à jour → renumérotation GDBH
+    # 3. Une fois l'arbre stable, on met à jour les IDs GDBH
     renumber_tree(tree)
-
 
 
 # Cas d'insertion / mise à jour
 
-def insert_new_symbol(tree, symbol):   #correspond a modification(H,s) 
+def insert_new_symbol(tree, symbol): #correspond a modification(H,s) 
     """Insérer un nouveau symbole via le nœud NYT."""
-    old_NYT = tree.NYT
-    leaf = LeafNode(symbol=symbol)
-    nyt_leaf = LeafNode(is_NYT=True)
-    int_node = InternalNode(nyt_leaf,leaf)
-    leaf.parent = int_node
-    nyt_leaf.parent = int_node
-    if old_NYT is tree.root :  ## si l'arbre est vide 
+    old_nyt = tree.NYT
+    new_nyt = LeafNode(is_NYT=True)
+    new_leaf = LeafNode(symbol=symbol)
+    int_node = InternalNode(left=new_nyt, right=new_leaf)
+    new_nyt.parent = int_node
+    new_leaf.parent = int_node
+
+    if old_nyt is tree.root: ## si l'arbre est vide 
         tree.root = int_node
         int_node.parent = None
-
     else:
-        parent = old_NYT.parent   #on prend le parent de NYT
-        if parent.left is old_NYT:   #si l'ancien # est a gauche  
-            parent.left = int_node
-        else:
-            parent.right = int_node   #si l'ancien # est a gauche 
+        # Remplacement de l'ancien NYT par le sous-arbre
+        parent = old_nyt.parent #on prend le parent de NYT
         int_node.parent = parent
+        if parent.left is old_nyt: 
+            parent.left = int_node #si l'ancien # est à gauche  
+        else: 
+            parent.right = int_node #si l'ancien # est à droite
 
-    tree.NYT = nyt_leaf
-    tree.symbol_nodes[symbol] = leaf 
-    return leaf
-
-
-
+    # Mise à jour des références de l'arbre
+    tree.NYT = new_nyt
+    tree.symbol_nodes[symbol] = new_leaf
+    
+    return new_leaf
 
 
 # Primitives de traitement
 
 
 def find_block_leader(tree, node):
-    """Retourne le chef de bloc pour `node` :
-    parmi tous les nœuds de même poids, celui ayant l'id GDBH le plus élevé.
-    """
+    """Retourne le chef de bloc : 
+    parmi tous les nœuds de même poids, celui ayant l'id GDBH le plus élevé."""
+    if node is tree.root:
+        return node
+        
     target_weight = node.weight
-    leader = node  # au minimum, le nœud lui-même
+    leader = node
+    max_id = node.id if node.id is not None else -1
 
-    # BFS pour visiter tous les nœuds
     from collections import deque
     queue = deque([tree.root])
 
     while queue:
         n = queue.popleft()
-
-        # On traite les ids None comme -1 pour éviter les erreurs au début
-        id_n = n.id if n.id is not None else -1
-        id_leader = leader.id if leader.id is not None else -1
-
-        if n.weight == target_weight and id_n > id_leader:
+        
+        # on traite les ids None comme -1 pour éviter les erreurs au début
+        n_id = n.id if n.id is not None else -1
+        if n.weight == target_weight and n_id > max_id:
             leader = n
+            max_id = n_id
 
         # exploration classique
-        if getattr(n, "left", None):
-            queue.append(n.left)
-        if getattr(n, "right", None):
-            queue.append(n.right)
+        if not tree.is_leaf(n):
+            if n.left: queue.append(n.left)
+            if n.right: queue.append(n.right)
 
     return leader
+
 
 
 # -----------------------------------------------------------
@@ -138,67 +121,41 @@ def find_block_leader(tree, node):
 
 
 def swap_nodes(tree, a, b):
-    if a == b:
-        return  # rien à faire
+    """Échange la position de deux nœuds dans l'arbre."""
+    if a is b: 
+        return
 
-    # Vérifier si un des deux est la racine (important pour la mise à jour finale)
-    a_was_root = (tree.root is a)
-    b_was_root = (tree.root is b)
+    par_a, par_b = a.parent, b.parent
 
-    # Parents respectifs
-    parentA = a.parent
-    parentB = b.parent
+    if tree.root is a: tree.root = b
+    elif tree.root is b: tree.root = a
 
-    # Déterminer si A ou B est un fils gauche (sinon c’est le fils droit)
-    A_is_left = (parentA and parentA.left is a)
-    B_is_left = (parentB and parentB.left is b)
-
-    # ---------------------------------------------------------
-    # CAS 1 : A et B sont des frères (même parent)
-    # Dans ce cas on inverse simplement les fils gauche/droit
-
-    if parentA is parentB:
-        parent = parentA  # même parent
-
-        if A_is_left:
+    # cas 1 : même parent (frères)
+    if par_a is par_b:
+        parent = par_a
+        # on inverse gauche/droite
+        if parent.left is a:
             parent.left = b
             parent.right = a
         else:
             parent.left = a
             parent.right = b
-
-        # Mettre à jour les pointeurs parent même parent mais on réassigne proprement
-        a.parent = parent
-        b.parent = parent
-        return
-
-    # ---------------------------------------------------------
-    # CAS 2 : cas général (parents différents)
-
-    a.parent = parentB
-    b.parent = parentA
-
-    # Mise à jour immédiate de la racine si nécessaire
-    # doit être fait avant de modifier les enfants
-    if a_was_root:
-        tree.root = b
-    elif b_was_root:
-        tree.root = a
-
-    # Mettre à jour les enfants du parent d'origine de A
-    if parentA:
-        if A_is_left:
-            parentA.left = b
-        else:
-            parentA.right = b
-
-    # Mettre à jour les enfants du parent d'origine de B
-    if parentB:
-        if B_is_left:
-            parentB.left = a
-        else:
-            parentB.right = a
-
+    
+    # cas 2 : parents différents
+    else:
+        # on attache b à l'ancien parent de a
+        if par_a:
+            if par_a.left is a: par_a.left = b
+            else: par_a.right = b
+        
+        # on attache a à l'ancien parent de b
+        if par_b:
+            if par_b.left is b: par_b.left = a
+            else: par_b.right = a
+            
+        # mise à jour des parents des nœuds eux-mêmes
+        a.parent = par_b
+        b.parent = par_a
 
 
 def renumber_tree(tree):
@@ -208,50 +165,37 @@ def renumber_tree(tree):
     i.e. on numérote d'abord les nœuds les plus profonds,
     et pour un même niveau : de gauche à droite.
     """
-    from collections import defaultdict, deque
-
-    # 1) BFS pour collecter les noeuds selon leur profondeur
-    depth_to_nodes = defaultdict(list)
-    queue = deque([(tree.root, 0)]) # on commance par le root
+    from collections import deque, defaultdict
+    
+    # 1. BFS pour collecter les noeuds selon leur profondeur
+    depth_map = defaultdict(list)
+    queue = deque([(tree.root, 0)])
     max_depth = 0
-
+    
     while queue:
-        node, depth = queue.popleft() 
-        depth_to_nodes[depth].append(node)
-        max_depth = max(max_depth, depth)
-
-        if getattr(node, "left", None):  #getattr(obj, attribute_name, default_value) # either it get the attribute and gives none back
-            queue.append((node.left, depth + 1)) # on utilise getattr car les feullies ont pas les attributes left et right donc ça pose des problems 
-        if getattr(node, "right", None):
-            queue.append((node.right, depth + 1))
-
-    # 2) Numérotation GDBH : profondeur max → 0, gauche → droite
+        node, d = queue.popleft()
+        depth_map[d].append(node)
+        max_depth = max(max_depth, d)
+        
+        if not tree.is_leaf(node):
+            if node.left: queue.append((node.left, d + 1))
+            if node.right: queue.append((node.right, d + 1))
+            
+    # 2. Assignation des IDs (De bas en haut, gauche à droite)
     current_id = 1
-    for depth in range(max_depth, 0 - 1, -1):   # bas → haut
-        for node in depth_to_nodes[depth]:      # gauche → droite
+    for d in range(max_depth, -1, -1):
+        for node in depth_map[d]:
             node.id = current_id
             current_id += 1
 
 
-
-
-def is_ancestor(a, b):
-    """Retourne True si 'a' est un ancêtre de 'b'."""
-    cur = b.parent
-    while cur is not None:
-        if cur is a:
+def is_ancestor(ancestor, node):
+    """Vérifie si 'ancestor' est un parent (à n'importe quel degré) de 'node'."""
+    curr = node.parent
+    while curr is not None:
+        if curr is ancestor:
             return True
-        cur = cur.parent
+        curr = curr.parent
     return False
 
-
-
-def get_adress(a) :
-    cur = a.parent
-    adress_cur =get_adress(cur)
-    if cur is not None :
-        if cur.left is a :
-            return adress_cur + "0"
-        else : 
-            return adress_cur + "1"
         

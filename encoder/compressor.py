@@ -8,21 +8,49 @@ from pathlib import Path
 from typing import Iterable
 from core.tree import DynamicHuffmanTree
 from utils.bitwriter import ecriture
-
-# TODO: ajouter des fonctions utilitaires (ex: get_code_for_symbol, write_utf8)
+import os
 
 def encode_file(input_path: str | Path, output_path: str | Path) -> None:
-    """Encoder un fichier texte UTF-8 vers un binaire type .huff.
-
-    Étapes (à implémenter):
-    - ouvrir le fichier texte (UTF-8), itérer les symboles
-    - symbole connu: écrire le code courant
-    - nouveau symbole: écrire le code NYT puis l'UTF-8 brut
-    - mettre à jour l'arbre dynamique après chaque symbole
-    - flush et close du BitWriter
-    """
-    # Squelette: pas de logique réelle pour l'instant
+    """Encoder un fichier texte UTF-8 vers un binaire via un fichier temp."""
+    
+    temp_bits_path = "temp_bits.txt"
     tree = DynamicHuffmanTree()
-    writer = ecriture(output_path)
-    # ouvrir ressources, itérer, etc.
-    pass
+    
+    # 1. récupération de la taille exacte du fichier original (en octets)
+    file_size = os.path.getsize(input_path)
+    
+    with open(input_path, 'rb') as f_in, \
+         open(temp_bits_path, 'w', encoding='utf-8') as f_temp:
+        
+        # 2. écriture de la taille en binaire au tout début (sur 64 bits pour être large)
+        # Cela crée une chaine de 64 '0' et '1' au début du fichier
+        f_temp.write(format(file_size, '064b'))
+
+        while True:
+            byte_data = f_in.read(1)
+            
+            if not byte_data:
+                break 
+            
+            symbol = ord(byte_data) 
+            
+            bit_sequence = ""
+            if tree.contains(symbol):  
+                # Cas 1 : Symbole connu -> Chemin dans l'arbre
+                bit_sequence = tree.get_code(symbol)
+            else: 
+                # Cas 2 : Nouveau symbole -> NYT + 8 bits 
+                nyt_code = tree.get_nyt_code()
+                char_bits = format(symbol, '08b') 
+                bit_sequence = nyt_code + char_bits
+
+            f_temp.write(bit_sequence)
+            tree.update(symbol)
+
+    ecriture(temp_bits_path, str(output_path))
+    if os.path.exists(temp_bits_path):
+        os.remove(temp_bits_path) # supprime le fichier temporaire utilisé avec la fonction ecriture
+
+encode_file("Blaise_Pascal.txt", 
+            "Blaise_Pascal2.txt.huff")
+

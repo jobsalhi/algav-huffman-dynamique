@@ -10,12 +10,8 @@ def ecriture(fichier_chaine: str, fichier_bin: str):
     et écrit un fichier binaire en regroupant les bits par octets.
     """
 
-    # Chemins absolus
-    filepath1 = os.path.join(BASE_DIR, fichier_chaine)
-    filepath2 = os.path.join(BASE_DIR, fichier_bin)
-
     # Lire la chaîne de bits
-    with open(filepath1, 'r') as f1:
+    with open(fichier_chaine, 'r') as f1:
         original_bits = f1.read().strip()
 
     bits = original_bits  # copie
@@ -31,12 +27,8 @@ def ecriture(fichier_chaine: str, fichier_bin: str):
         bytes_out.append(int(byte_str, 2))
 
     # Écriture binaire
-    with open(filepath2, 'wb') as f2:
+    with open(fichier_bin, 'wb') as f2:
         f2.write(bytes_out)
 
-    
-    print("Bits lus depuis le fichier TXT :", original_bits)
-    print("Bits écrits (avec padding)     :", bits)
 
-
-ecriture("fichier_chaine.txt", "fichier.bin")
+#ecriture("fichier_chaine.txt", "fichier.bin")
