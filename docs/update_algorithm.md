@@ -2,51 +2,52 @@ Mise à jour complète du .md (à copier directement)
 
 # Algorithme de Mise à Jour (FGK / Vitter)
 
-## Renumérotation GDBH de l’arbre (`renumber_tree`)
+## 1. Renumérotation GDBH de l’arbre (`renumber_tree`)
 
 ```python
 def renumber_tree(tree):
-		"""Assigne les numéros GDBH aux nœuds.
+	"""Assigne les numéros GDBH aux nœuds.
 
-		Ordre GDBH : Gauche → Droite → Bas → Haut
-		(on numérote d'abord les nœuds les plus profonds,
-		et pour un même niveau : de gauche à droite).
-		"""
-		from collections import defaultdict, deque
+	Ordre GDBH : Gauche → Droite → Bas → Haut
+	(on numérote d'abord les nœuds les plus profonds,
+	et pour un même niveau : de gauche à droite).
+	"""
+	from collections import deque, defaultdict
 
-		# 1) BFS pour collecter les nœuds selon leur profondeur
-		depth_to_nodes = defaultdict(list)
-		queue = deque([(tree.root, 0)])
-		max_depth = 0
+	# 1) BFS pour collecter les nœuds selon leur profondeur
+	depth_map = defaultdict(list)
+	queue = deque([(tree.root, 0)])
+	max_depth = 0
 
-		while queue:
-				node, depth = queue.popleft()
-				depth_to_nodes[depth].append(node)
-				max_depth = max(max_depth, depth)
+	while queue:
+		node, d = queue.popleft()
+		depth_map[d].append(node)
+		max_depth = max(max_depth, d)
 
-				if getattr(node, "left", None):
-						queue.append((node.left, depth + 1))
-				if getattr(node, "right", None):
-						queue.append((node.right, depth + 1))
+		if not tree.is_leaf(node):
+			if node.left:
+				queue.append((node.left, d + 1))
+			if node.right:
+				queue.append((node.right, d + 1))
 
-		# 2) Numérotation GDBH : profondeur max → 0, gauche → droite
-		current_id = 1
-		for depth in range(max_depth, -1, -1):      # bas → haut
-				for node in depth_to_nodes[depth]:      # gauche → droite
-						node.id = current_id
-						current_id += 1
+	# 2) Numérotation GDBH : profondeur max → 0, gauche → droite
+	current_id = 1
+	for d in range(max_depth, -1, -1):      # bas → haut
+		for node in depth_map[d]:           # gauche → droite
+			node.id = current_id
+			current_id += 1
 ```
 
-#### Exemple illustratif
+### Exemple illustratif
 
 Arbre :
 
 ```
-		  R
-    	/   \
-	   A     B
-	 /  \     \
-   C     D     E
+	  R
+	/   \
+	A     B
+	/ \     \
+	C   D     E
 ```
 
 - Profondeur 0 : `R`  
@@ -55,9 +56,9 @@ Arbre :
 
 Après BFS :
 
-- `depth_to_nodes[0] = [R]`  
-- `depth_to_nodes[1] = [A, B]`  
-- `depth_to_nodes[2] = [C, D, E]`  
+- `depth_map[0] = [R]`  
+- `depth_map[1] = [A, B]`  
+- `depth_map[2] = [C, D, E]`  
 - `max_depth = 2`
 
 Numérotation GDBH (Bas → Haut, Gauche → Droite) :
@@ -66,245 +67,213 @@ Numérotation GDBH (Bas → Haut, Gauche → Droite) :
 - Profondeur 1 : `A, B` → `A.id=4`, `B.id=5`  
 - Profondeur 0 : `R` → `R.id=6`
 
-On obtient :
+Résultat :
 
 ```
-		   R(6)
-	   /        \
-	 A(4)        B(5)
-	 /  \          \
-  C(1)  D(2)       E(3)
+	     R(6)
+	   /      \
+	A(4)        B(5)
+	/  \          \
+	C(1)  D(2)       E(3)
 ```
 
-C’est exactement l’ordre Gauche → Droite → Bas → Haut décrit dans le cours, ce qui permet de définir `finBloc` comme « le nœud de même poids avec l’indice GDBH le plus grand ».
+**Complexité :** chaque nœud est visité au plus deux fois → `O(n)`.
 
-#### Choix des structures de données
+---
 
-- `deque` (file FIFO)  
-	- utilisée pour le BFS : `append` pour enfiler, `popleft` en O(1) pour dépiler.
-- `defaultdict(list)`  
-	- pour `depth_to_nodes[depth].append(node)` sans tester si la clé existe.
-
-On pourrait utiliser une liste simple et un `dict` classique, mais ce serait plus verbeux et un peu moins efficace pour la file.
-
-#### Complexité
-
-Soit `n` le nombre de nœuds (au plus `2*|alphabet| - 1`, donc ≤ 511 pour un alphabet de 256 symboles) :
-
-- BFS (collecte par profondeur) : chaque nœud est enfilé et dépilé une fois → **O(n)**  
-- Numérotation (boucle sur les profondeurs + nœuds) : chaque nœud est visité une fois → **O(n)**  
-
-Donc au total :
-
-\[
-T(n) = O(n) + O(n) = O(n)
-\]
-
-Avec `n ≤ 511`, renuméroter à chaque mise à jour reste très peu coûteux en pratique.
-
-## Explication de `insert_new_symbol(tree, symbol)`
-
-Cette fonction correspond exactement au cas *« nouveau symbole »* décrit dans l’algorithme FGK (`Modification(H, s)`).
-
-Lorsqu’un symbole apparaît pour la première fois, il n’existe pas encore de feuille associée dans l’arbre. On utilise alors le nœud NYT (`Not Yet Transmitted`) pour insérer ce nouveau symbole.
-
-Logique étape par étape :
-
-1. **Récupération de l’ancien NYT**  
-	On commence par récupérer le nœud NYT courant (`old_NYT`). C’est ce nœud qui sera remplacé.
-
-2. **Création des nouveaux nœuds**  
-	On crée :
-	- une nouvelle *feuille* contenant le symbole (`leaf`),
-	- un *nouveau nœud NYT* (`nyt_leaf`),
-	- un *nœud interne* (`int_node`) qui aura comme enfants :
-	  - le nouveau NYT (à gauche),
-	  - la feuille du symbole (à droite).
-
-	Cela correspond à la transformation suivante :
-
-	Avant :
-
-	```
-		 # (NYT)
-	```
-
-	Après insertion du symbole `s` :
-
-	```
-		  (•)
-		 /   \
-	   #      s
-	```
-
-3. **Mise à jour des pointeurs parents**  
-	Les deux nouveaux enfants (`leaf` et `nyt_leaf`) pointent vers le nœud interne `int_node` comme parent.
-
-4. **Remplacement de l’ancien NYT dans l’arbre**  
-	- Si l’arbre ne contenait que le NYT (cas du tout premier symbole), le nœud interne devient la **nouvelle racine**.  
-	- Sinon, on remplace `old_NYT` par `int_node` dans son parent, à gauche ou à droite selon le cas.
-
-5. **Mise à jour du nouvel état de l’arbre**  
-	- Le nouveau NYT devient `tree.NYT` (pour les futures insertions).  
-	- La feuille contenant le symbole est ajoutée dans la table `tree.symbol_nodes` pour rendre les recherches futures en **O(1)**.
-
-6. **Retour de la feuille du symbole**  
-	La fonction renvoie la feuille `leaf`. Cela permet à `update_tree` de commencer ensuite le traitement FGK (incréments, `finBloc`, échanges) à partir de cette nouvelle feuille.
-
-En résumé, `insert_new_symbol` transforme le nœud NYT en un petit sous-arbre : **nœud interne + nouvelle feuille + nouveau NYT**. C’est exactement ce qui est requis par l’algorithme de Huffman dynamique pour que le nouveau symbole soit intégré et puisse ensuite participer aux mises à jour de l’arbre.
-
-## Fonction `find_block_leader(tree, node)`
-
-Cette fonction implémente `finBloc(H, Q)` du cours :
-
-« Retourner le nœud du bloc (même poids) ayant l’indice GDBH maximal. »
-
-### Problème rencontré
-
-Lors des premières insertions, les `id` sont `None`.
-L’expression `n.id > leader.id` devient impossible.
-
-### Solution
-
-Traiter `id=None` comme `-1` :
+## 2. Insertion d’un nouveau symbole (`insert_new_symbol`)
 
 ```python
-id_n = n.id if n.id is not None else -1
-id_leader = leader.id if leader.id is not None else -1
+def insert_new_symbol(tree, symbol):
+	"""Insérer un nouveau symbole via le nœud NYT (Modification(H,s))."""
+	old_nyt = tree.NYT
+	new_nyt = LeafNode(is_NYT=True)
+	new_leaf = LeafNode(symbol=symbol)
+	int_node = InternalNode(left=new_nyt, right=new_leaf)
+	new_nyt.parent = int_node
+	new_leaf.parent = int_node
 
-if n.weight == target_weight and id_n > id_leader:
-	leader = n
-```
-
-### Complexité
-
-- BFS → O(n)
-- Sélection du max → O(n)
-
-Très faible en pratique.
-
-## Fonction `swap_nodes(tree, a, b)`
-
-Cette fonction est l’un des points délicats de FGK.
-Elle doit échanger deux nœuds dans l’arbre sans modifier leurs sous-arbres.
-
-### Règles du cours
-
-- Ne jamais échanger un nœud avec un ancêtre
-  (test fait dans `update_tree` avant d’appeler `swap_nodes`)
-- Mettre à jour uniquement les pointeurs parent / enfants
-- Cas particulier : deux nœuds sont frères
-- Cas particulier : l’un des nœuds est la racine
-
-### Cas 1 : `A` et `B` sont des frères
-
-Dans ce cas, le parent est le même.
-On échange simplement les pointeurs gauche/droite :
-
-```python
-if parentA is parentB:
-	if A_is_left:
-		parent.left = b
-		parent.right = a
+	if old_nyt is tree.root:
+		# Premier symbole : le nœud interne devient la racine
+		tree.root = int_node
+		int_node.parent = None
 	else:
-		parent.left = a
-		parent.right = b
-	a.parent = parent
-	b.parent = parent
-	return
+		# Remplacer l'ancien NYT par le nouveau nœud interne
+		parent = old_nyt.parent
+		int_node.parent = parent
+		if parent.left is old_nyt:
+			parent.left = int_node
+		else:
+			parent.right = int_node
+
+	tree.NYT = new_nyt
+	tree.symbol_nodes[symbol] = new_leaf
+
+	return new_leaf
 ```
 
-### Cas 2 : cas général
+Idée : on remplace l’ancien NYT par un petit sous-arbre interne + (nouveau NYT, nouvelle feuille). On met à jour :
 
-On échange leurs parents respectifs :
+- `tree.NYT` vers le nouveau NYT,
+- `tree.symbol_nodes[symbol]` pour retrouver la feuille en `O(1)`.
+
+Complexité : quelques créations et affectations de pointeurs → `O(1)`.
+
+---
+
+## 3. Chef de bloc (`find_block_leader`)
 
 ```python
-a.parent = parentB
-b.parent = parentA
+def find_block_leader(tree, node):
+	"""Retourne le chef de bloc :
+	parmi tous les nœuds de même poids, celui ayant l'id GDBH le plus élevé."""
+	if node is tree.root:
+		return node
+
+	target_weight = node.weight
+	leader = node
+	max_id = node.id if node.id is not None else -1
+
+	from collections import deque
+	queue = deque([tree.root])
+
+	while queue:
+		n = queue.popleft()
+
+		n_id = n.id if n.id is not None else -1
+		if n.weight == target_weight and n_id > max_id:
+			leader = n
+			max_id = n_id
+
+		if not tree.is_leaf(n):
+			if n.left:
+				queue.append(n.left)
+			if n.right:
+				queue.append(n.right)
+
+	return leader
 ```
 
-Puis on remplace `A` par `B` chez `parentA`, et `B` par `A` chez `parentB`.
+- Parcours en largeur (BFS) de tout l’arbre.
+- On garde le nœud de même poids avec l’`id` maximal.
+- Les `id=None` sont traités comme `-1` pour éviter les erreurs au début.
 
-### Cas 3 : racine
+Complexité : chaque nœud est examiné au plus une fois → `O(n)`.
 
-Si un des nœuds était la racine :
+---
+
+## 4. Échange de deux nœuds (`swap_nodes`)
 
 ```python
-tree.root = l_autre
+def swap_nodes(tree, a, b):
+	"""Échange la position de deux nœuds dans l'arbre."""
+	if a is b:
+		return
+
+	par_a, par_b = a.parent, b.parent
+
+	# Si l'un des deux est la racine
+	if tree.root is a:
+		tree.root = b
+	elif tree.root is b:
+		tree.root = a
+
+	# Cas 1 : même parent (frères)
+	if par_a is par_b:
+		parent = par_a
+		if parent.left is a:
+			parent.left = b
+			parent.right = a
+		else:
+			parent.left = a
+			parent.right = b
+
+	# Cas 2 : parents différents
+	else:
+		if par_a:
+			if par_a.left is a:
+				par_a.left = b
+			else:
+				par_a.right = b
+
+		if par_b:
+			if par_b.left is b:
+				par_b.left = a
+			else:
+				par_b.right = a
+
+		a.parent = par_b
+		b.parent = par_a
 ```
 
-### Résultat
+- Ne modifie pas les sous-arbres, uniquement les liens parent/enfant.
+- Gère :
+  - le cas où les deux nœuds sont frères,
+  - le cas général (parents différents),
+  - le cas où l’un des deux est la racine.
 
-Une opération de `swap` conserve l’arbre et respecte la structure FGK.
+Complexité : nombre constant de pointeurs modifiés → `O(1)`.
 
-## Fonction `is_ancestor(a, b)`
+---
 
-Utilisée dans `update_tree` pour respecter la contrainte :
-
-« On n’échange jamais un nœud avec un de ses ancêtres. »
+## 5. Test d’ascendance (`is_ancestor`)
 
 ```python
-def is_ancestor(a, b):
-	cur = b.parent
-	while cur is not None:
-		if cur is a:
+def is_ancestor(ancestor, node):
+	"""Vérifie si 'ancestor' est un parent (à n'importe quel degré) de 'node'."""
+	curr = node.parent
+	while curr is not None:
+		if curr is ancestor:
 			return True
-		cur = cur.parent
+		curr = curr.parent
 	return False
 ```
 
-## Implémentation complète de `update_tree`
+- Utilisé pour garantir : « on n’échange jamais un nœud avec un de ses ancêtres ».
+- On remonte la chaîne des parents jusqu’à la racine.
 
-Cette fonction implémente `Modification(H, s)` puis `Traitement(H, Q)` du cours.
+Complexité : au plus la hauteur de l’arbre → `O(h)`.
 
-### Modification(H, s)
+---
 
-- Si `s` n’est pas dans l’arbre → insertion via NYT
-- Sinon → on récupère la feuille du symbole déjà existant
-- On obtient ainsi un nœud `Q` à partir duquel commencer les mises à jour
-
-### Traitement(H, Q)
-
-Tant que `Q` n’est pas la racine :
-
-- Trouver `leader = finBloc(H, Q)`
-- Si `leader != Q` ET `leader` n’est pas un ancêtre → `swap_nodes`
-- Incrémenter `Q.weight`
-- Monter au parent (`Q = Q.parent`)
-
-À la fin → renumérotation GDBH.
-
-### Code final
+## 6. Mise à jour complète (`update_tree`)
 
 ```python
 def update_tree(tree, symbol):
-	"""Implémente Modification(H,s) + Traitement(H,Q) du cours.
-	Met à jour l’arbre FGK après lecture d’un symbole.
-	"""
+	"""Mettre à jour l'arbre dynamique après lecture de `symbol`."""
 
-	# 1) Cas nouveau symbole
-	if symbol not in tree.symbol_nodes:
-		Q = insert_new_symbol(tree, symbol)
-
-	# 2) Cas symbole déjà vu
+	# 1. Gestion du symbole (nouveau vs existant)
+	if tree.contains(symbol):
+		q_node = tree.symbol_nodes[symbol]
 	else:
-		Q = tree.symbol_nodes[symbol]
+		q_node = insert_new_symbol(tree, symbol)
 
-	# 3) Traitement FGK / Vitter
-	while Q is not None:
+	# 2. Traitement FGK / Vitter
+	while q_node is not None:
+		leader = find_block_leader(tree, q_node)
+		if leader is not q_node and not is_ancestor(leader, q_node):
+			swap_nodes(tree, leader, q_node)
+		q_node.weight += 1
+		q_node = q_node.parent
 
-		leader = find_block_leader(tree, Q)
-
-		# Échange possible uniquement si pas ancêtre
-		if leader is not Q and not is_ancestor(leader, Q):
-			swap_nodes(tree, leader, Q)
-
-		# Incrément
-		Q.weight += 1
-
-		# Remonter dans l’arbre
-		Q = Q.parent
-
-	# 4) Renumérotation finale
+	# 3. Renumérotation GDBH finale
 	renumber_tree(tree)
 ```
+
+Résumé :
+
+1. **Modification(H, s)**  
+   - Si symbole nouveau → `insert_new_symbol` via le NYT.  
+   - Sinon → on récupère directement la feuille via `tree.symbol_nodes`.
+
+2. **Traitement(H, Q)**  
+   - Tant que `Q` n’est pas `None` :
+     - chercher le chef de bloc (`find_block_leader`),
+     - échanger si possible (`swap_nodes`),
+     - incrémenter le poids,
+     - remonter au parent.
+
+3. **Renumérotation**  
+   - Appel à `renumber_tree(tree)` pour mettre à jour tous les `id`.
+
+Complexité par symbole : en gros `O(h + n)` (à cause de `find_block_leader` en `O(n)`), mais avec un alphabet borné (`n ≤ 511`), cela reste très raisonnable pour ce projet.
