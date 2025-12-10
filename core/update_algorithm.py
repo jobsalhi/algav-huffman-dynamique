@@ -167,7 +167,7 @@ def renumber_tree(tree):
     """
     from collections import deque, defaultdict
     
-    # 1. BFS pour collecter les noeuds selon leur profondeur
+    # 1. BFS pour collecter les noeuds selon leur profondeur (Breadth-First Search) parcours en largeur
     depth_map = defaultdict(list)
     queue = deque([(tree.root, 0)])
     max_depth = 0

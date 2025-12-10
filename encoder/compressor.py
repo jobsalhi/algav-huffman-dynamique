@@ -5,7 +5,6 @@ met à jour l'arbre dynamique et écrit les bits via `BitWriter`.
 """
 
 from pathlib import Path
-from typing import Iterable
 from core.tree import DynamicHuffmanTree
 from utils.bitwriter import ecriture
 import os
@@ -32,7 +31,7 @@ def encode_file(input_path: str | Path, output_path: str | Path) -> None:
             if not byte_data:
                 break 
             
-            symbol = ord(byte_data) 
+            symbol = byte_data[0] 
             
             bit_sequence = ""
             if tree.contains(symbol):  
@@ -51,6 +50,17 @@ def encode_file(input_path: str | Path, output_path: str | Path) -> None:
     if os.path.exists(temp_bits_path):
         os.remove(temp_bits_path) # supprime le fichier temporaire utilisé avec la fonction ecriture
 
-encode_file("Blaise_Pascal.txt", 
-            "Blaise_Pascal2.txt.huff")
+
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) != 3:
+        print("Usage : python -m encoder.compressor <entree.txt> <sortie.huff>")
+        raise SystemExit(1)
+
+    input_arg = Path(sys.argv[1])
+    output_arg = Path(sys.argv[2])
+
+    encode_file(input_arg, output_arg)
+    print(f"Compression terminée : {input_arg} -> {output_arg}")
 

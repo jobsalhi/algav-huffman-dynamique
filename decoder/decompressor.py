@@ -6,14 +6,14 @@ gère NYT vs codes connus, met à jour l'arbre, et écrit la sortie UTF-8.
 
 from pathlib import Path
 from core.tree import DynamicHuffmanTree
-from utils.bitreader import lecture, read_utf8_bytes
+from utils.bitreader import lecture
 from core.update_algorithm import update_tree
 
 def decode_file(input_path: str | Path, output_path: str | Path) -> None:
     """Décoder un binaire type .huff vers un fichier texte UTF-8
     """
     tree = DynamicHuffmanTree()
-    sequence = lecture(input_path)
+    sequence = lecture(str(input_path))
 
     # 1. On lit les 64 premiers bits pour récupérer la taille
     size_bits = sequence[:64]
@@ -28,16 +28,16 @@ def decode_file(input_path: str | Path, output_path: str | Path) -> None:
 
             nb_bits, symbol = read_next_symbol(tree, sequence, cursor)
 
-            if symbol is None: break
+            if nb_bits == 0 or symbol is None:
+                break
 
             cursor += nb_bits
             decoded_count += 1
 
-            if symbol:
-                update_tree(tree, symbol)
-                out.write(bytes([symbol]))
-            
-    print("Décompression terminée avec succès !")
+            out.write(bytes([symbol]))
+            update_tree(tree, symbol)
+
+    print(f"Décompression terminée : {decoded_count} octets décodés.")
 
 
 def read_next_symbol(tree, sequence, start_index):
@@ -70,17 +70,15 @@ def _traverse_tree(tree, sequence, start_index):
     current_idx = start_index
     max_len = len(sequence)
 
-    while current_idx < max_len:
-        if tree.is_leaf(node):
-            return node, (current_idx - start_index)
-
+    # Descendre tant qu'on n'a pas atteint une feuille
+    while current_idx < max_len and not tree.is_leaf(node):
         bit = sequence[current_idx]
-        node = node.left if bit == '0' else node.right
+        node = node.left if bit == "0" else node.right
         current_idx += 1
 
     if tree.is_leaf(node):
-        return node, (current_idx - start_index)
-        
+        return node, current_idx - start_index
+
     return None, 0
 
 
@@ -94,5 +92,10 @@ def _read_literal_byte(sequence, start_index):
     return int(bits_lit, 2)
 
 
-decode_file("Blaise_Pascal2.txt.huff", 
-            "Blaise_Pascal2.txt")
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) != 3:
+        print("Usage: python -m decoder.decompressor <input.huff> <output.txt>")
+    else:
+        decode_file(sys.argv[1], sys.argv[2])

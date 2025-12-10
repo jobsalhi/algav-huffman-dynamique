@@ -31,4 +31,4 @@ def ecriture(fichier_chaine: str, fichier_bin: str):
         f2.write(bytes_out)
 
 
-#ecriture("fichier_chaine.txt", "fichier.bin")
+# ecriture("fichier_chaine.txt", "fichier.bin")
