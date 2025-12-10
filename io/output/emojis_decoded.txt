@@ -1,0 +1,18 @@
+1. ASCII (1 octet) :
+   Hello World! 1234567890
+
+2. Accents (2 octets) :
+   Été, Noël, Façade, Garçon, Hétérogène.
+   À @ #
+
+3. Symboles & Monnaies (3 octets) :
+   Euro: €
+   Maths: ∑ π ≠ ∞
+   Flèches: ← ↑ → ↓
+
+4. Emojis (4 octets) :
+   Visages : 😀 😂 😉 😍 🤪
+   Nature  : 🌲 🍄 🌵 🌊 🔥
+   Animaux : 🐈 🐕 🐍 🦖
+   Tech    : 💻 💾 🚀 🛰️
+  
