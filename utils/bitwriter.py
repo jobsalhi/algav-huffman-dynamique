@@ -12,9 +12,7 @@ def ecriture(fichier_chaine: str, fichier_bin: str):
 
     # Lire la chaîne de bits
     with open(fichier_chaine, 'r') as f1:
-        original_bits = f1.read().strip()
-
-    bits = original_bits  # copie
+        bits = f1.read().strip()
 
     # Compléter les bits pour un multiple de 8
     if len(bits) % 8 != 0:
