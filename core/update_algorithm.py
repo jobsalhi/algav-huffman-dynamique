@@ -112,7 +112,7 @@ def find_block_leader(tree, node):
 #     if n.right: queue.append(n.right)
 #     if n.left:  queue.append(n.left)
 #
-# Statut : cette approche semble fonctionner sur de nombreux exemples,
+# cette approche semble fonctionner 
 # mais n'est pas garantie par la théorie FGK. À tester plus tard avec
 # des séquences aléatoires pour comparer son comportement au finBloc exact.
 # -----------------------------------------------------------

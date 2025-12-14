@@ -37,7 +37,7 @@ def decode_file(input_path: str | Path, output_path: str | Path) -> None:
             out.write(bytes([symbol]))
             update_tree(tree, symbol)
 
-    print(f"Décompression terminée : {decoded_count} octets décodés.")
+    return None
 
 
 def read_next_symbol(tree, sequence, start_index):
@@ -99,3 +99,4 @@ if __name__ == "__main__":
         print("Usage: python -m decoder.decompressor <input.huff> <output.txt>")
     else:
         decode_file(sys.argv[1], sys.argv[2])
+

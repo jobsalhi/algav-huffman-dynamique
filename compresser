@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 <input.txt> <output.huff>" >&2
+  exit 1
+fi
+
+python3 ./compresser.py "$1" "$2"
