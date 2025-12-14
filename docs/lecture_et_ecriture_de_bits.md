@@ -1,29 +1,34 @@
-# Lecture et Écriture de Bits (Bit I/O)
+# Lecture et écriture de bits (Bit I/O)
 
-Ce fichier explique le rôle des fonctions `bitwriter` et `bitreader`
-utilisées pour la compression et la décompression Huffman dynamique.
+Ce fichier explique la conversion entre :
+
+- un flux de bits (codes Huffman),
+- et un fichier binaire (octets).
+
+Dans ce projet, ces conversions sont gérées par :
+
+- `utils.bitwriter.ecriture(...)` : écrit une chaîne de bits dans un fichier binaire
+- `utils.bitreader.lecture(...)` : lit un fichier binaire et retourne la chaîne de bits
 
 ---
 
-## 1. Pourquoi avons-nous besoin d’un BitWriter ?
+## 1) Pourquoi avons-nous besoin d’un BitWriter ?
 
 L’encodeur produit un flux de bits variable, par exemple :
 
 10111001011...
 
 
-Un fichier binaire ne peut stocker que des **octets (8 bits)**.
-Le BitWriter sert à :
+Un fichier binaire ne stocke que des **octets (8 bits)**. Pour écrire un flux de bits variable :
 
-1. accumuler les bits générés par l’encodeur
-2. regrouper les bits par blocs de 8
-3. convertir chaque bloc en un entier (0–255)
-4. écrire ces octets dans un fichier `.huff`
-5. compléter le dernier octet avec des `0` si nécessaire
+1. regrouper les bits par blocs de 8
+2. convertir chaque bloc en un entier (0–255)
+3. écrire ces octets dans un fichier `.huff`
+4. compléter le dernier octet avec des `0` si nécessaire (padding)
 
 ---
 
-## 2. Pourquoi avons-nous besoin d’un BitReader ?
+## 2) Pourquoi avons-nous besoin d’un BitReader ?
 
 Le décodeur lit le fichier `.huff`, qui est une suite d’octets.
 Le BitReader sert à :
@@ -35,33 +40,29 @@ Le BitReader sert à :
 
 ---
 
-## 3. Fonctions fournies
+## 3) Fonctions utilisées dans ce dépôt
 
-### `write_bits_to_file(bits, filepath)`
-Écrit une chaîne de bits dans un fichier binaire.
+### `utils.bitwriter.ecriture(fichier_chaine, fichier_bin)`
+Lit un fichier texte contenant une chaîne de bits (`"0101..."`) et écrit le fichier binaire.
+Si le nombre de bits n’est pas multiple de 8, un padding de `0` est ajouté à droite.
 
-### `append_bits(buffer, bits)`
-Ajoute des bits au buffer accumulé.
-
-### `read_bits_from_file(filepath)`
-Lit un fichier binaire et retourne la séquence de bits correspondante.
+### `utils.bitreader.lecture(fichier_bin)`
+Lit un fichier binaire octet par octet et reconstruit la chaîne de bits correspondante.
 
 ---
 
-## 4. Pourquoi des fonctions et pas des classes ?
+## 4) Lien avec l’en-tête 64 bits
 
-- plus simple
-- plus lisible pour le binôme
-- le projet ne nécessite aucun état persistant
-- les fonctions couvrent exactement les besoins de l’encodeur/décodeur
+Le fichier `.huff` commence par **64 bits** encodant la taille attendue (en octets) du fichier original.
+
+- l’encodeur écrit ces 64 bits en premier,
+- le décodeur lit ces 64 bits et s’arrête après avoir reconstruit exactement `expected_size` octets.
 
 ---
 
 ## Résumé
 
-BitWriter et BitReader sont indispensables pour convertir entre :
+Le BitWriter/BitReader permet de relier :
 
-- **flux de bits** (Huffman)
-- **octets** (fichiers binaires)
-
-Ils assurent le lien entre la compression logique et le stockage physique.
+- la logique Huffman (flux de bits),
+- le stockage sur disque (octets).

@@ -34,6 +34,26 @@ python -m decoder.decompressor input.huff output.txt
 python -m tests.test_roundtrip_basic
 ```
 
+## Scripts de rendu (format imposé)
+
+Pour l’évaluation automatique, deux scripts sont fournis à la racine :
+
+```bash
+./compresser input.txt output.huff
+./decompresser input.huff output.txt
+```
+
+Ils appellent respectivement `compresser.py` et `decompresser.py`.
+
+À chaque exécution, une ligne est ajoutée dans :
+
+- `compression.txt`
+- `decompression.txt`
+
+Format (séparateur `;`) :
+
+`input_path;output_path;input_bytes;output_bytes;ratio;time_ms`
+
 ## Rôle de `if __name__ == "__main__":`
 
 Dans chaque fichier Python, la variable spéciale `__name__` dépend de la façon dont le fichier est utilisé :

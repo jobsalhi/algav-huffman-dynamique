@@ -1,4 +1,4 @@
-# Structure de l'Arbre de Huffman Dynamique
+# Structure de l’arbre de Huffman dynamique
 
 Ce document décrit la structure interne de l'arbre utilisé dans notre projet de compression selon l’algorithme de Huffman dynamique. L'objectif est de maintenir un arbre binaire qui évolue au fur et à mesure de la lecture des symboles lors de la compression et de la décompression.
 
@@ -24,8 +24,8 @@ Tous les nœuds, feuilles ou internes, héritent de cette structure commune.
 
 Représente :
 
-- un symbole (ex. `'a'`, `'b'`, `'é'`, etc.)  
-- ou le nœud spécial NYT (`#`, “Not Yet Transmitted”)
+- un symbole (dans notre implémentation : un **octet**, donc un entier dans `{0..255}`),
+- ou le nœud spécial NYT (`#`, “Not Yet Transmitted”).
 
 Attributs spécifiques :
 
@@ -60,9 +60,7 @@ Le poids d’un nœud interne est la somme des poids de ses enfants.
 
 ## 2. État initial de l’arbre
 
-Au début de la compression ou décompression, l’arbre contient uniquement :
-
-NYT (#)
+Au début de la compression ou décompression, l’arbre contient uniquement une feuille NYT (`#`).
 
 
 Ce nœud représente tous les symboles encore jamais vus. Dès qu’un nouveau symbole apparaît, il sera inséré à partir de ce nœud.
@@ -79,11 +77,15 @@ Pointeur vers la racine de l’arbre.
 ### 3.2 `NYT`  
 Pointeur vers le nœud NYT courant (ce pointeur évolue lorsque l'arbre se modifie).
 
-### 3.3 `symbol_nodes`  
-Dictionnaire permettant de retrouver rapidement la feuille correspondant à un symbole :
+### 3.3 `symbol_nodes`
+Dictionnaire permettant de retrouver rapidement la feuille correspondant à un symbole.
 
+Dans ce projet :
 
-Cela permet une recherche en temps constant lors de la compression.
+- clé : l’octet (entier),
+- valeur : la feuille (`LeafNode`).
+
+Cela permet une recherche en temps constant lors de la compression (et évite de parcourir l’arbre).
 
 ### 3.4 `is_leaf(node)`  
 Fonction utilitaire :
@@ -96,9 +98,9 @@ Permet de déterminer si un nœud est une feuille (utile pour la décompression)
 
 ---
 
-## 4. Exemple après lecture du premier symbole 'a'
+## 4. Exemple après lecture du premier symbole
 
-Après avoir lu 'a', l’arbre devient :
+Après avoir lu un premier symbole (octet), l’arbre devient :
 
 ```
      (*)
@@ -118,11 +120,11 @@ NYT : nouveau nœud NYT
 
 L'arbre fournit les opérations essentielles :
 
-- retrouver le code d’un symbole en suivant le chemin racine → feuille
-- insérer un nouveau symbole via le nœud NYT
-- mettre à jour les poids des nœuds
-- appliquer les échanges (swaps) selon les règles GDBH
-- décoder des bits en parcourant l’arbre
+- retrouver le code d’un symbole en suivant le chemin racine → feuille,
+- insérer un nouveau symbole via le nœud NYT,
+- mettre à jour les poids des nœuds,
+- appliquer les échanges (swaps) selon les règles FGK/Vitter,
+- décoder des bits en parcourant l’arbre.
 
 La classe `DynamicHuffmanTree` sert donc de structure centrale pour le compresseur, le décompresseur et l’algorithme de mise à jour.
 

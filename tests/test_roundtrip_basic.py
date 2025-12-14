@@ -80,11 +80,15 @@ def save_results_csv(results: list, output="compression_report.csv"):
     """Save test results to CSV for plotting."""
     if not results:
         return
-    with open(output, "w", newline="", encoding="utf-8") as f:
+    output_path = Path(output)
+    if not output_path.is_absolute():
+        output_path = Path(__file__).resolve().parent / output_path
+
+    with open(output_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=results[0].keys())
         writer.writeheader()
         writer.writerows(results)
-    print(f"\n[INFO] Results saved to {output}")
+    print(f"\n[INFO] Results saved to {output_path}")
 
 
 if __name__ == "__main__":

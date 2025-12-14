@@ -1,6 +1,13 @@
-Mise à jour complète du .md (à copier directement)
-
 # Algorithme de Mise à Jour (FGK / Vitter)
+
+Ce document décrit la mise à jour de l’arbre après lecture d’un symbole.
+Dans l’implémentation, la mise à jour est centralisée dans `core/update_algorithm.py` et s’applique de façon identique côté compression et décompression.
+
+Idée générale :
+
+- si le symbole est nouveau : insertion via NYT (création d’un nœud interne + nouvelle feuille + nouveau NYT),
+- puis remontée vers la racine : recherche du chef de bloc, échange éventuel, incrémentation des poids,
+- renumérotation GDBH finale.
 
 ## 1. Renumérotation GDBH de l’arbre (`renumber_tree`)
 
