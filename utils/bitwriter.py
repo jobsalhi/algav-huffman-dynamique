@@ -1,8 +1,4 @@
 """Écriture de bits dans un fichier binaire (version fonctions)."""
-import os
-
-# Chemin du dossier où se trouve ce script
-BASE_DIR = os.path.dirname(__file__)
 
 def ecriture(fichier_chaine: str, fichier_bin: str):
     """
@@ -21,12 +17,10 @@ def ecriture(fichier_chaine: str, fichier_bin: str):
     # Conversion en octets
     bytes_out = bytearray()
     for i in range(0, len(bits), 8):
-        byte_str = bits[i:i+8]
+        byte_str = bits[i : i + 8]
         bytes_out.append(int(byte_str, 2))
 
     # Écriture binaire
     with open(fichier_bin, 'wb') as f2:
         f2.write(bytes_out)
 
-
-# ecriture("fichier_chaine.txt", "fichier.bin")

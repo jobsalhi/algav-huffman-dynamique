@@ -1,31 +1,27 @@
-"""Fonctions de décompression (approche fonctions, sans classes).
-
-`decode_file` lit des bits, reconstruit les symboles avec l'arbre dynamique,
-gère NYT vs codes connus, met à jour l'arbre, et écrit la sortie UTF-8.
-"""
+"""Fonctions de décompression (approche fonctions)."""
 
 from pathlib import Path
+
 from core.tree import DynamicHuffmanTree
-from utils.bitreader import lecture
 from core.update_algorithm import update_tree
+from utils.bitreader import lecture
+
 
 def decode_file(input_path: str | Path, output_path: str | Path) -> None:
-    """Décoder un binaire type .huff vers un fichier texte UTF-8
-    """
+    """Décoder un binaire .huff vers un fichier de sortie (octets)."""
     tree = DynamicHuffmanTree()
     sequence = lecture(str(input_path))
 
-    # 1. On lit les 64 premiers bits pour récupérer la taille
+    # En-tête : taille attendue sur 64 bits
     size_bits = sequence[:64]
     expected_size = int(size_bits, 2)
-    
+
     n = len(sequence)
     cursor = 64
     decoded_count = 0
-    
+
     with open(output_path, 'wb') as out:
         while cursor < n and decoded_count < expected_size:
-
             nb_bits, symbol = read_next_symbol(tree, sequence, cursor)
 
             if nb_bits == 0 or symbol is None:
@@ -50,11 +46,11 @@ def read_next_symbol(tree, sequence, start_index):
     if node is None:
         return 0, None
 
-    # cas spécial : marqueur NYT 
+    # NYT : lire le prochain octet brut
     if node.is_NYT:
         literal_index = start_index + bits_traversed
         char = _read_literal_byte(sequence, literal_index)
-        
+
         return bits_traversed + 8, char
 
     # cas standard : symbole déjà connu
@@ -70,7 +66,7 @@ def _traverse_tree(tree, sequence, start_index):
     current_idx = start_index
     max_len = len(sequence)
 
-    # Descendre tant qu'on n'a pas atteint une feuille
+    # Descente bit à bit jusqu'à une feuille
     while current_idx < max_len and not tree.is_leaf(node):
         bit = sequence[current_idx]
         node = node.left if bit == "0" else node.right
@@ -87,8 +83,6 @@ def _read_literal_byte(sequence, start_index):
     Lit 8 bits à partir de l'index donné et les convertit en caractère.
     """
     bits_lit = sequence[start_index : start_index + 8]
-    
-    char_code = int(bits_lit, 2)
     return int(bits_lit, 2)
 
 

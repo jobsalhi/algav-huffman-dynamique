@@ -1,5 +1,6 @@
 """Lecture de bits depuis un fichier binaire (version fonctions)."""
 
+
 def lecture(fichier_bin: str) -> str:
     """
     Lit un fichier binaire et retourne une chaîne de caractères
@@ -7,14 +8,12 @@ def lecture(fichier_bin: str) -> str:
     """
     bits_list = []
     with open(fichier_bin, 'rb') as f:
-        # On lit tout le fichier binaire
+        # Lire tout le fichier binaire
         content = f.read()
-        
+
     # On convertit chaque octet en bits
     for byte in content:
         bits_list.append(f"{byte:08b}")
-        
+
     # On rejoint tout à la fin (une seule allocation mémoire)
     return "".join(bits_list)
-
-#lecture("fichier.bin")

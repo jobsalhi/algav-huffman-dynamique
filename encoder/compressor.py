@@ -1,46 +1,41 @@
-"""Fonctions de compression (approche fonctions, sans classes).
+"""Fonctions de compression (approche fonctions)."""
 
-`encode_file` lit le texte symbole par symbole, gère NYT vs symbole connu,
-met à jour l'arbre dynamique et écrit les bits via `BitWriter`.
-"""
-
+import os
 from pathlib import Path
+
 from core.tree import DynamicHuffmanTree
 from utils.bitwriter import ecriture
-import os
+
 
 def encode_file(input_path: str | Path, output_path: str | Path) -> None:
     """Encoder un fichier texte UTF-8 vers un binaire via un fichier temp."""
-    
+
     temp_bits_path = "temp_bits.txt"
     tree = DynamicHuffmanTree()
-    
-    # 1. récupération de la taille exacte du fichier original (en octets)
+
+    # Taille exacte du fichier original (en octets)
     file_size = os.path.getsize(input_path)
-    
+
     with open(input_path, 'rb') as f_in, \
          open(temp_bits_path, 'w', encoding='utf-8') as f_temp:
-        
-        # 2. écriture de la taille en binaire au tout début (sur 64 bits pour être large)
-        # Cela crée une chaine de 64 '0' et '1' au début du fichier
+
+        # En-tête : taille sur 64 bits
         f_temp.write(format(file_size, '064b'))
 
         while True:
             byte_data = f_in.read(1)
-            
+
             if not byte_data:
-                break 
-            
-            symbol = byte_data[0] 
-            
+                break
+
+            symbol = byte_data[0]
+
             bit_sequence = ""
-            if tree.contains(symbol):  
-                # Cas 1 : Symbole connu -> Chemin dans l'arbre
+            if tree.contains(symbol):
                 bit_sequence = tree.get_code(symbol)
-            else: 
-                # Cas 2 : Nouveau symbole -> NYT + 8 bits 
+            else:
                 nyt_code = tree.get_nyt_code()
-                char_bits = format(symbol, '08b') 
+                char_bits = format(symbol, '08b')
                 bit_sequence = nyt_code + char_bits
 
             f_temp.write(bit_sequence)
@@ -48,7 +43,7 @@ def encode_file(input_path: str | Path, output_path: str | Path) -> None:
 
     ecriture(temp_bits_path, str(output_path))
     if os.path.exists(temp_bits_path):
-        os.remove(temp_bits_path) # supprime le fichier temporaire utilisé avec la fonction ecriture
+        os.remove(temp_bits_path)
 
 
 if __name__ == "__main__":
@@ -63,4 +58,5 @@ if __name__ == "__main__":
 
     encode_file(input_arg, output_arg)
     print(f"Compression terminée : {input_arg} -> {output_arg}")
+    output_arg = Path(sys.argv[2])
 
