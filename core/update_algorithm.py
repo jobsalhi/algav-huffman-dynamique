@@ -1,24 +1,20 @@
-"""Algorithme de mise à jour (FGK/Vitter) pour Huffman dynamique.
-"""
+"""Algorithme de mise à jour (FGK/Vitter) pour Huffman dynamique."""
 
 from .leaf_node import LeafNode
 from .internal_node import InternalNode
 from .node_base import NodeBase
 
-# Entrée principale
 
 def update_tree(tree, symbol):
     """Mettre à jour l'arbre dynamique après lecture de `symbol`."""
-    
-    # 1. Gestion du symbole (Nouveau vs Existant)
+
+    # 1) Récupérer/insérer la feuille du symbole
     if tree.contains(symbol):
-        # Cas simple : on récupère la feuille existante
         q_node = tree.symbol_nodes[symbol]
     else:
-        # Cas complexe : création d'une nouvelle feuille via NYT
         q_node = insert_new_symbol(tree, symbol)
 
-    # 2. Algorithme de remontée et d'ajustement
+    # 2) Remontée : échange éventuel + incrément
     while q_node is not None:
         leader = find_block_leader(tree, q_node)
         if leader is not q_node and not is_ancestor(leader, q_node):
@@ -26,13 +22,13 @@ def update_tree(tree, symbol):
         q_node.weight += 1
         q_node = q_node.parent
 
-    # 3. Une fois l'arbre stable, on met à jour les IDs GDBH
+    # 3) Renumérotation GDBH
     renumber_tree(tree)
 
 
 # Cas d'insertion / mise à jour
 
-def insert_new_symbol(tree, symbol): #correspond a modification(H,s) 
+def insert_new_symbol(tree, symbol):
     """Insérer un nouveau symbole via le nœud NYT."""
     old_nyt = tree.NYT
     new_nyt = LeafNode(is_NYT=True)
@@ -41,22 +37,21 @@ def insert_new_symbol(tree, symbol): #correspond a modification(H,s)
     new_nyt.parent = int_node
     new_leaf.parent = int_node
 
-    if old_nyt is tree.root: ## si l'arbre est vide 
+    if old_nyt is tree.root:
         tree.root = int_node
         int_node.parent = None
     else:
-        # Remplacement de l'ancien NYT par le sous-arbre
-        parent = old_nyt.parent #on prend le parent de NYT
+        parent = old_nyt.parent
         int_node.parent = parent
-        if parent.left is old_nyt: 
-            parent.left = int_node #si l'ancien # est à gauche  
-        else: 
-            parent.right = int_node #si l'ancien # est à droite
+        if parent.left is old_nyt:
+            parent.left = int_node
+        else:
+            parent.right = int_node
 
-    # Mise à jour des références de l'arbre
+    # Mettre à jour les références
     tree.NYT = new_nyt
     tree.symbol_nodes[symbol] = new_leaf
-    
+
     return new_leaf
 
 
@@ -64,11 +59,10 @@ def insert_new_symbol(tree, symbol): #correspond a modification(H,s)
 
 
 def find_block_leader(tree, node):
-    """Retourne le chef de bloc : 
-    parmi tous les nœuds de même poids, celui ayant l'id GDBH le plus élevé."""
+    """Retourne le chef de bloc (poids égal, id GDBH maximal)."""
     if node is tree.root:
         return node
-        
+
     target_weight = node.weight
     leader = node
     max_id = node.id if node.id is not None else -1
@@ -78,57 +72,33 @@ def find_block_leader(tree, node):
 
     while queue:
         n = queue.popleft()
-        
-        # on traite les ids None comme -1 pour éviter les erreurs au début
+
+        # ids None traités comme -1
         n_id = n.id if n.id is not None else -1
         if n.weight == target_weight and n_id > max_id:
             leader = n
             max_id = n_id
 
-        # exploration classique
+        # exploration BFS
         if not tree.is_leaf(n):
-            if n.left: queue.append(n.left)
-            if n.right: queue.append(n.right)
+            if n.left:
+                queue.append(n.left)
+            if n.right:
+                queue.append(n.right)
 
     return leader
 
-
-
-# -----------------------------------------------------------
-# NOTE (Ayoub): Tentative optimisation idea
-#
-# Hypothèse : faire un parcours BFS en priorité droite→gauche,
-# et retourner le premier nœud rencontré ayant le poids recherché.
-# Cela reproduit souvent l’ordre GDBH inverse dans de nombreux cas,
-# car l’arbre de Huffman dynamique garde une structure assez équilibrée.
-#
-# Exemple d’idée :
-#
-# queue = deque([tree.root])
-# while queue:
-#     n = queue.popleft()
-#     if n.weight == target_weight:
-#         return n
-#     if n.right: queue.append(n.right)
-#     if n.left:  queue.append(n.left)
-#
-# cette approche semble fonctionner 
-# mais n'est pas garantie par la théorie FGK. À tester plus tard avec
-# des séquences aléatoires pour comparer son comportement au finBloc exact.
-# -----------------------------------------------------------
-
-
-
-
 def swap_nodes(tree, a, b):
     """Échange la position de deux nœuds dans l'arbre."""
-    if a is b: 
+    if a is b:
         return
 
     par_a, par_b = a.parent, b.parent
 
-    if tree.root is a: tree.root = b
-    elif tree.root is b: tree.root = a
+    if tree.root is a:
+        tree.root = b
+    elif tree.root is b:
+        tree.root = a
 
     # cas 1 : même parent (frères)
     if par_a is par_b:
@@ -143,17 +113,21 @@ def swap_nodes(tree, a, b):
     
     # cas 2 : parents différents
     else:
-        # on attache b à l'ancien parent de a
+        # attacher b à l'ancien parent de a
         if par_a:
-            if par_a.left is a: par_a.left = b
-            else: par_a.right = b
-        
-        # on attache a à l'ancien parent de b
+            if par_a.left is a:
+                par_a.left = b
+            else:
+                par_a.right = b
+
+        # attacher a à l'ancien parent de b
         if par_b:
-            if par_b.left is b: par_b.left = a
-            else: par_b.right = a
-            
-        # mise à jour des parents des nœuds eux-mêmes
+            if par_b.left is b:
+                par_b.left = a
+            else:
+                par_b.right = a
+
+        # mise à jour des parents
         a.parent = par_b
         b.parent = par_a
 
@@ -166,22 +140,24 @@ def renumber_tree(tree):
     et pour un même niveau : de gauche à droite.
     """
     from collections import deque, defaultdict
-    
-    # 1. BFS pour collecter les noeuds selon leur profondeur (Breadth-First Search) parcours en largeur
+
+    # 1) Collecte par profondeur (BFS)
     depth_map = defaultdict(list)
     queue = deque([(tree.root, 0)])
     max_depth = 0
-    
+
     while queue:
         node, d = queue.popleft()
         depth_map[d].append(node)
         max_depth = max(max_depth, d)
-        
+
         if not tree.is_leaf(node):
-            if node.left: queue.append((node.left, d + 1))
-            if node.right: queue.append((node.right, d + 1))
-            
-    # 2. Assignation des IDs (De bas en haut, gauche à droite)
+            if node.left:
+                queue.append((node.left, d + 1))
+            if node.right:
+                queue.append((node.right, d + 1))
+
+    # 2) Assignation des IDs (bas -> haut, gauche -> droite)
     current_id = 1
     for d in range(max_depth, -1, -1):
         for node in depth_map[d]:
@@ -198,4 +174,4 @@ def is_ancestor(ancestor, node):
         curr = curr.parent
     return False
 
-        
+
