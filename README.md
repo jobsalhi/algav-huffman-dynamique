@@ -45,4 +45,6 @@ Les scripts Bash `compresser` et `decompresser` appellent respectivement `compre
 ## Documentation
 
 - Documentation technique : [docs/README.md](docs/README.md)
-- Rapport LaTeX : [report/rapport_algav_huffman_dynamique.tex](report/rapport_algav_huffman_dynamique.tex)
+- Rapport : [report/Projet_ALGAV_Salhi_Mistretta.pdf](report/Projet_ALGAV_Salhi_Mistretta.pdf)
+- Diaporama : [report/Diaporama_ALGAV_Salhi_Mistretta.pdf](report/Diaporama_ALGAV_Salhi_Mistretta.pdf)
+
