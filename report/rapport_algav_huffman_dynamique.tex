@@ -7,7 +7,8 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[french]{babel}
-
+\usepackage{csvsimple}
+\usepackage{booktabs} 
 % --- Mise en page ---
 \usepackage[a4paper,margin=2.5cm]{geometry}
 \usepackage{float}
@@ -17,6 +18,12 @@
 % --- Maths / liens ---
 \usepackage{amsmath,amssymb}
 \usepackage[hidelinks]{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
 
 % --- Code ---
 \usepackage{xcolor}
@@ -115,7 +122,7 @@ D'un point de vue théorique (algorithme FGK/Vitter), un échange avec un ancêt
 
 \subsection*{Question 2 — Nombre maximal d'échanges lors d'une modification}
 
-Une modification (mise à jour après lecture d'un symbole (octet), c'est-à-dire d'un
+Une modification (mise à jour après lecture d'un symbole, c'est-à-dire d'un
 \emph{octet}) est effectuée dans \texttt{core/update\_algorithm.py} par une
 remontée depuis la feuille correspondant au symbole jusqu'à la racine. À chaque
 itération, l'algorithme : (i) recherche le \emph{chef de bloc} (nœud de même poids
@@ -129,25 +136,27 @@ L'arbre de Huffman dynamique contient alors $k$ feuilles correspondant aux
 symboles, ainsi qu'une feuille spéciale NYT, soit $k+1$ feuilles au total.
 
 Un arbre binaire plein possédant $L$ feuilles contient $2L-1$ nœuds. Dans notre
-cas, le nombre total de nœuds vérifie donc :
+cas, $L=k+1$ et le nombre total de nœuds $n$ vérifie :
 \[
-  n \le 2(k+1)-1 = 2k+1.
+    n = 2(k+1)-1 = 2k+1 \le 511.
 \]
-
+On traite 8 bits à chaque modification, donc le nombre d'éléments dans l'alphabet est borné par 255, ce qui implique que le nombre total maximal de nœuds est $255 \times 2+1 = 511$.
+\paragraph{}
 La boucle de mise à jour parcourt exactement les nœuds situés sur le chemin
-``feuille $\rightarrow$ racine'', de longueur $h$ (profondeur de la feuille
+``feuille $\rightarrow$ racine'', de longueur $p$ (profondeur de la feuille
 modifiée). À chaque niveau, l'algorithme peut effectuer \textbf{au plus un
 échange}. Le nombre total d'échanges $S$ lors d'une modification vérifie alors :
 \[
-  S \le h+1 \le \text{hauteur de l'arbre} \le n-1 \le 2k.
+  S \le p+1 \le \text{h}.
 \]
 
-Ainsi, le \textbf{nombre maximal d'échanges par mise à jour est en $O(h)$}, et
-dans le pire cas (arbre dégénéré), \textbf{en $O(k)$}, où $k$ est le nombre de
-symboles distincts déjà rencontrés. Cette borne est volontairement pessimiste,
-l'arbre de Huffman dynamique n'étant pas garanti équilibré.
+Ainsi, le \textbf{nombre maximal d'échanges par mise à jour} est en $O(h)$, où h est la hauteur de l'arbre. 
+Dans le cas d'un arbre dégénéré (pire cas), on a la hauteur $h$ qui est égale au nombre de
+symboles distincts déjà rencontrés, c'est-à-dire $k$, ce qui nous donne \textbf{$O(k)$}.
+Cette borne est volontairement pessimiste, l'arbre de Huffman dynamique n'étant pas garanti équilibré.
 
 \paragraph{Nombre d'échanges vs temps d'exécution.}
+\label{comp_echange}
 Le nombre d'échanges ne correspond pas directement au temps d'exécution d'une
 mise à jour. Dans notre implémentation actuelle, la recherche du chef de bloc est
 réalisée par la fonction \texttt{find\_block\_leader}, qui effectue un
@@ -171,10 +180,21 @@ coût d'une mise à jour serait alors ramené à $O(h)$ (ou $O(h\log n)$), sans
 modifier la borne sur le \emph{nombre} d'échanges.
 
 \subsection*{Question 3 — Fonction \texttt{lecture(fichier.bin)} : binaire $\rightarrow$ chaîne de bits}
-Nous avons implémenté \texttt{utils/bitreader.py} : lecture du fichier en mode \texttt{rb}, puis conversion de chaque octet en représentation binaire sur 8 bits, concaténée en une chaîne de \texttt{'0'} et \texttt{'1'}.
+Nous avons implémenté \texttt{utils/bitreader.py} de la façon suivante : 
+\begin{enumerate}
+    \item lecture du fichier en mode \texttt{rb}
+    \item conversion de chaque octet en représentation binaire sur 8 bits, concaténée en une chaîne de \texttt{'0'} et \texttt{'1'}.
+\end{enumerate}
 
 \subsection*{Question 4 — Fonction \texttt{ecriture(fichier\_chaine.txt, fichier.bin)} : bits $\rightarrow$ binaire}
-Nous avons implémenté \texttt{utils/bitwriter.py} : lecture de la chaîne de bits, padding à droite pour obtenir un multiple de 8, conversion par blocs de 8 bits en octets, puis écriture en mode \texttt{wb}. Le résultat est relisible par \texttt{lecture}.
+Nous avons implémenté \texttt{utils/bitwriter.py} comme ceci : 
+\begin{enumerate}
+    \item lecture de la chaîne de bits
+    \item padding à droite pour obtenir un multiple de 8
+    \item conversion par blocs de 8 bits en octets
+    \item écriture en mode \texttt{wb}
+\end{enumerate}
+Le résultat est lisible par \texttt{lecture}.
 
 \subsection*{Question 5 — Structures de données et complexités}
 \textbf{Arbre dynamique} : classe \texttt{DynamicHuffmanTree} contenant :
@@ -187,7 +207,7 @@ Nous avons implémenté \texttt{utils/bitwriter.py} : lecture de la chaîne de b
 \begin{itemize}
   \item test “symbole connu ?” : $O(1)$ via \texttt{symbol\_nodes} ;
   \item obtention d'un code : $O(h)$ (remontée feuille $\rightarrow$ racine) ;
-  \item mise à jour (remontée + échanges) : au plus $O(h)$ échanges et incrémentations, mais la recherche du chef de bloc est effectuée par un parcours BFS global de l'arbre à chaque niveau ($O(n)$ par appel), ce qui conduit à un coût total de $O(hn)$ pour une mise à jour complète ;
+  \item mise à jour (remontée + échanges) : $O(hn)$ (explications dans la \hyperref[comp_echange]{question 2}) ;
   \item renumérotation GDBH : BFS $O(n)$.
 \end{itemize}
 
@@ -202,6 +222,47 @@ Nous avons implémenté \texttt{utils/bitwriter.py} : lecture de la chaîne de b
 \textbf{finBloc} : dans notre code, l'équivalent opérationnel de \texttt{finBloc(H,m)} est \texttt{find\_block\_leader(tree, node)} : on cherche, parmi les nœuds de même poids, celui d'identifiant GDBH maximal (fin du bloc). Cette recherche est réalisée par parcours BFS de l'arbre.
 
 \subsection*{Question 7 — Tests compression/décompression}
+
+\paragraph{Compression}
+Pour la compression, nous avons suivi le processus suivant:
+\begin{enumerate}
+    \item création d'un arbre vide 
+    \item lecture du fichier UTF-8 en format binaire 
+    \item écriture de la taille du fichier en binaire sur 64 bits dans un fichier temporaire
+    \item boucle sur chaque octet lu du fichier :
+    \begin{itemize}
+        \item 
+        \begin{itemize}
+            \item[$\checkmark$] si le symbole lu existe déjà, on récupère son chemin
+            \item[$\checkmark$] sinon on récupère le chemin menant du noeud NYT, puis on le concatène au code binaire du symbole lu
+        \end{itemize}
+    \item écriture du chemin du symbole dans le fichier temporaire
+    \item mise à jour de l'arbre
+    \end{itemize}
+    \item appel à la fonction écriture() pour recopier le contenu du fichier temporaire dans le fichier de sortie .huff
+\end{enumerate}
+
+\paragraph{Décompression}
+La décompression suit la même logique :
+\begin{enumerate}
+    \item création d'un arbre vide 
+    \item lecture de la taille du fichier dans les 64 bits d'en-tête
+    \item lecture du fichier .huff avec la fonction lecture() 
+    \item boucle sur les bits de la séquence récupérée :
+    \begin{itemize}
+        \item 
+        \begin{itemize}
+            \item[$\checkmark$] si on a le chemin menant du nœud NYT, on récupère les 8 bits suivants
+            \item[$\checkmark$] sinon, on a le chemin menant à une feuille, et on récupère son symbole
+        \end{itemize}
+    \item écriture en binaire du symbole dans le fichier de sortie
+    \item mise à jour de l'arbre
+    \end{itemize}
+\end{enumerate}
+\paragraph{}
+Remarque : avec notre approche utilisant une en-tête contenant la taille dans le fichier compressé, nous ne sommes pas en mesure de décompresser correctement le fichier .huff fourni sur moodle.
+
+\paragraph{Tests}
 Nous validons la correction par tests de \textbf{round-trip} : compression puis décompression, et comparaison \textbf{octet à octet} entre l'entrée et la sortie.
 
 Le script \texttt{python -m tests.test\_roundtrip\_basic} exécute ces tests sur les fichiers présents dans \texttt{io/input/} et produit un CSV de résultats dans \texttt{tests/compression\_report.csv}.
@@ -210,7 +271,8 @@ Le script \texttt{python -m tests.test\_roundtrip\_basic} exécute ces tests sur
 Nous avons utilisé des textes issus de Project Gutenberg, par exemple \texttt{io/input/Blaise\_Pascal.txt}, ainsi que \texttt{io/input/gutenberg\_small\_fr.txt}. Les mesures de taille/ratio/temps sont collectées automatiquement.
 
 \subsection*{Question 9 — Expériences sur fichiers aléatoires (distribution contrôlée)}
-Nous avons testé :
+Premièrement nous avons testé \texttt{io/input/emojis.txt} qui nous a permet de valider la compression de symboles de plusieurs octets (1 emoji = 4 octets)
+Nous avons aussi testé :
 \begin{itemize}
   \item \texttt{io/input/random\_uniform\_letters.txt} : distribution quasi uniforme des lettres ;
   \item \texttt{io/input/random\_biased\_letters.txt} : distribution biaisée (beaucoup de \texttt{A}, puis \texttt{B}, etc.).
@@ -226,23 +288,53 @@ Nous avons testé :
 \end{itemize}
 
 \subsection*{Question 11 — Analyse expérimentale}
-Le tableau \ref{tab:results} synthétise les résultats observés (issus de \texttt{tests/compression\_report.csv}).
 
-\begin{table}[H]
+Le tableau~\ref{tab:results} synthétise les résultats observés
+(issus de \texttt{tests/compression\_report.csv}).
+
+\begin{table}[h]
 \centering
-\caption{Résultats expérimentaux (extraits)}
+\caption{Résultats expérimentaux}
 \label{tab:results}
-\begin{tabular}{lrrrr}
+
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrr}
 \toprule
-Fichier & Taille orig. (o) & Taille .huff (o) & Ratio & Remarque \\
+\textbf{File} &
+\textbf{Original (B)} &
+\textbf{Compressed (B)} &
+\textbf{Ratio} &
+\textbf{Compress (ms)} &
+\textbf{Decompress (ms)} \\
 \midrule
-Blaise\_Pascal.txt & 120304 & 70654 & 0.5873 & Texte naturel long \\
-random\_biased\_letters.txt & 414 & 90 & 0.2174 & Distribution très biaisée \\
-random\_uniform\_letters.txt & 660 & 436 & 0.6606 & Uniforme, gain limité \\
-short.txt & 3 & 12 & 4.0000 & Overhead + en-tête 64 bits \\
+
+\csvreader[
+  head to column names,
+  column names={
+    file=\file,
+    original_size=\originalsize,
+    compressed_size=\compressedsize,
+    ratio=\ratio,
+    compression_ms=\compressionms,
+    decompression_ms=\decompressionms
+  },
+  late after line=\\
+]{tests/compression_report.csv}{}%
+{%
+\file &
+\originalsize &
+\compressedsize &
+\ratio &
+\compressionms &
+\decompressionms
+}
+
 \bottomrule
 \end{tabular}
+}
 \end{table}
+
+
 
 Analyse :
 \begin{itemize}
@@ -251,6 +343,8 @@ Analyse :
   \item \textbf{Uniforme} : gain plus faible car les fréquences sont proches (codes de longueurs proches).
   \item \textbf{Textes naturels} : ratios plausibles ($<1$) et relativement stables quand la taille augmente.
 \end{itemize}
+
+
 
 \section{Format du rendu (scripts + logs)}
 Deux scripts Bash sont fournis à la racine :
@@ -276,7 +370,7 @@ Nous avons utilisé une IA générative comme outil d'assistance pour :
 Les propositions de l'IA ont systématiquement été vérifiées et adaptées. En particulier, une attention particulière a été portée à la distinction entre caractères UTF-8 et octets, ainsi qu'au respect strict des propriétés théoriques de l'algorithme de Huffman dynamique.
 
 \textbf{Estimation quantitative.}
-La proportion de code généré ou modifié avec l'aide de l'IA est estimée à environ \textbf{15\,\%}, et la proportion du texte du rapport influencée par l'IA à environ \textbf{25\,\%}.
+La proportion de code généré ou modifié avec l'aide de l'IA est estimée à environ \textbf{30\,\%}, et la proportion du texte du rapport influencée par l'IA à environ \textbf{40\,\%}.
 
 
 \section{Conclusion}
