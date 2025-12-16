@@ -1,0 +1,287 @@
+% Rapport ALGAV — Huffman Dynamique (FGK/Vitter)
+% Master 1 STL — Sorbonne Université — 2025/2026
+
+\documentclass[11pt,a4paper]{article}
+
+% --- Langue / encodage ---
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+
+% --- Mise en page ---
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{float}
+\usepackage{graphicx}
+\graphicspath{{images/}}
+
+% --- Maths / liens ---
+\usepackage{amsmath,amssymb}
+\usepackage[hidelinks]{hyperref}
+
+% --- Code ---
+\usepackage{xcolor}
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  showstringspaces=false,
+  tabsize=4
+}
+
+% --- Tables ---
+\usepackage{booktabs}
+
+\title{\rule{\linewidth}{0.4pt}\\[0.4em]
+Projet ALGAV 2025 — Huffman Dynamique\\[0.2em]
+\rule{\linewidth}{0.4pt}}
+\author{Maëlys Mistretta \and Ayoub Salhi}
+\date{Décembre 2025}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{1.2cm}
+  \includegraphics[width=0.45\textwidth]{sorbonne-universite-sciences-logo.png}\\[1.0cm]
+
+  {\Large Master 1 STL — Année 2025/2026 \\[0.2em]}
+  {\Large Algorithmique Avancée — Devoir de Programmation \\[0.8em]}
+
+  {\huge \bfseries Huffman Dynamique (FGK/Vitter) \\[0.6em]}
+
+  \rule{0.9\linewidth}{0.6pt}\\[0.6em]
+  {\large Rapport + rendu logiciel (compression/décompression) \\[1.2em]}
+
+  {\large \textbf{Auteurs :} Maëlys Mistretta, Ayoub Salhi \\[0.4em]}
+  {\large \textbf{Date :} Décembre 2025 \\[1.5em]}
+
+  \vfill
+
+  \begin{flushleft}
+  \textbf{Dépôt (structure)} : \texttt{core/}, \texttt{encoder/}, \texttt{decoder/}, \texttt{utils/}, \texttt{tests/}, \texttt{io/}.\\
+  \textbf{Langage} : Python 3.12.2.
+  \end{flushleft}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+\section{Introduction et contexte}
+Ce projet s'inscrit dans le devoir d'Algorithmique Avancée (Master 1 STL, Sorbonne Université, 2025/2026) et consiste à implanter un \textbf{compresseur} et un \textbf{décompresseur} basés sur l'algorithme de \textbf{Huffman dynamique} (Huffman adaptatif, FGK/Vitter).
+
+Contrairement à Huffman statique, l'arbre n'est pas construit à partir d'une table de fréquences connue à l'avance : il \textbf{évolue au fur et à mesure} du flux. L'enjeu principal est que le compresseur et le décompresseur modifient l'arbre \textbf{de manière strictement identique}, afin de partager implicitement les mêmes codes à chaque instant.
+
+\subsection{Principe (NYT / échappement)}
+On maintient un arbre de Huffman adaptatif (AHA) contenant une feuille spéciale \textbf{NYT} (\textit{Not Yet Transmitted}, notée \# dans l'énoncé). Pour chaque symbole lu :
+\begin{itemize}
+  \item si le symbole est \textbf{connu} : on émet son code courant (chemin racine $\rightarrow$ feuille) ;
+  \item sinon : on émet le code du \textbf{NYT}, puis le symbole sous forme brute, et on l'insère dans l'arbre ;
+  \item dans les deux cas : on met à jour l'arbre (échanges + incrémentations) jusqu'à la racine.
+\end{itemize}
+
+\subsection{Choix d'implantation : symbole = octet}
+Les fichiers d'entrée sont en UTF-8, mais notre implémentation traite le flux au niveau \textbf{octet} : un symbole Huffman est un entier dans $\{0,\dots,255\}$. Ainsi, un caractère UTF-8 multi-octets (accents, emoji, etc.) devient une suite de symboles. Ce choix garantit un alphabet borné et une décompression simple, au prix d'une compression parfois moins efficace sur certains textes.
+
+\section{Architecture logicielle (dépôt)}
+Le dépôt est structuré par responsabilité :
+\begin{itemize}
+  \item \texttt{core/} : nœuds, arbre et mise à jour FGK/Vitter ;
+  \item \texttt{encoder/} : compression ;
+  \item \texttt{decoder/} : décompression ;
+  \item \texttt{utils/} : lecture/écriture bit-à-bit ;
+  \item \texttt{tests/} et \texttt{io/} : jeux de tests, résultats expérimentaux.
+\end{itemize}
+
+\section{Format I/O binaire et conventions de bits}
+Conformément à l'énoncé, l'écriture/lecture se fait par octets (8 bits) en lisant/écrivant les bits \textbf{du poids fort vers le poids faible}. Si le nombre total de bits n'est pas multiple de 8, on complète le dernier octet par des 0 à droite.
+
+\subsection{En-tête de taille (64 bits)}
+Le fichier \texttt{.huff} commence par \textbf{64 bits} représentant la taille (en octets) du fichier original. Le décompresseur s'arrête après avoir reconstruit exactement ce nombre d'octets, ce qui permet d'ignorer le padding final.
+
+\section{Réponses aux questions}
+
+\subsection*{Question 1 — L'algorithme n'échange jamais un nœud avec un ancêtre}
+Dans notre code, avant tout échange nous testons explicitement la condition :
+\begin{center}
+\texttt{if leader is not q\_node and not is\_ancestor(leader, q\_node): swap\_nodes(...)}
+\end{center}
+Ainsi, un échange avec un ancêtre est interdit par construction.
+
+D'un point de vue théorique (algorithme FGK/Vitter), un échange avec un ancêtre inverserait une relation parent/enfant, casserait la structure binaire de l'arbre et rendrait incohérente la numérotation hiérarchique GDBH. Les échanges sont donc restreints à des nœuds de même bloc et sans relation d'ascendance, ce que garantit explicitement notre implémentation.
+
+\subsection*{Question 2 — Nombre maximal d'échanges lors d'une modification}
+
+Une modification (mise à jour après lecture d'un symbole (octet), c'est-à-dire d'un
+\emph{octet}) est effectuée dans \texttt{core/update\_algorithm.py} par une
+remontée depuis la feuille correspondant au symbole jusqu'à la racine. À chaque
+itération, l'algorithme : (i) recherche le \emph{chef de bloc} (nœud de même poids
+avec l'identifiant GDBH maximal), (ii) effectue éventuellement un
+\textbf{unique échange}, puis (iii) incrémente le poids et remonte vers le
+parent.
+
+\paragraph{Borne sur le nombre d'échanges.}
+Notons $k$ le nombre de symboles \emph{distincts déjà rencontrés} dans le flux.
+L'arbre de Huffman dynamique contient alors $k$ feuilles correspondant aux
+symboles, ainsi qu'une feuille spéciale NYT, soit $k+1$ feuilles au total.
+
+Un arbre binaire plein possédant $L$ feuilles contient $2L-1$ nœuds. Dans notre
+cas, le nombre total de nœuds vérifie donc :
+\[
+  n \le 2(k+1)-1 = 2k+1.
+\]
+
+La boucle de mise à jour parcourt exactement les nœuds situés sur le chemin
+``feuille $\rightarrow$ racine'', de longueur $h$ (profondeur de la feuille
+modifiée). À chaque niveau, l'algorithme peut effectuer \textbf{au plus un
+échange}. Le nombre total d'échanges $S$ lors d'une modification vérifie alors :
+\[
+  S \le h+1 \le \text{hauteur de l'arbre} \le n-1 \le 2k.
+\]
+
+Ainsi, le \textbf{nombre maximal d'échanges par mise à jour est en $O(h)$}, et
+dans le pire cas (arbre dégénéré), \textbf{en $O(k)$}, où $k$ est le nombre de
+symboles distincts déjà rencontrés. Cette borne est volontairement pessimiste,
+l'arbre de Huffman dynamique n'étant pas garanti équilibré.
+
+\paragraph{Nombre d'échanges vs temps d'exécution.}
+Le nombre d'échanges ne correspond pas directement au temps d'exécution d'une
+mise à jour. Dans notre implémentation actuelle, la recherche du chef de bloc est
+réalisée par la fonction \texttt{find\_block\_leader}, qui effectue un
+\textbf{parcours en largeur (BFS) complet} de l'arbre, de coût $O(n)$. Cette
+recherche est appelée à chaque niveau de la remontée.
+
+Le coût total d'une mise à jour est donc :
+\[
+  T_{\text{update}} = O(h \cdot n) + O(n) = O(hn),
+\]
+où le terme $O(n)$ supplémentaire correspond à la renumérotation finale des
+identifiants GDBH (\texttt{renumber\_tree}), également réalisée par un parcours
+BFS.
+
+\paragraph{Piste d'amélioration.}
+Cette complexité peut être réduite en évitant les parcours globaux répétés de
+l'arbre. En maintenant des structures de données permettant un accès direct aux
+blocs de poids (par exemple des listes ou dictionnaires indexés par poids), la
+recherche du chef de bloc pourrait être réalisée en $O(1)$ ou $O(\log n)$. Le
+coût d'une mise à jour serait alors ramené à $O(h)$ (ou $O(h\log n)$), sans
+modifier la borne sur le \emph{nombre} d'échanges.
+
+\subsection*{Question 3 — Fonction \texttt{lecture(fichier.bin)} : binaire $\rightarrow$ chaîne de bits}
+Nous avons implémenté \texttt{utils/bitreader.py} : lecture du fichier en mode \texttt{rb}, puis conversion de chaque octet en représentation binaire sur 8 bits, concaténée en une chaîne de \texttt{'0'} et \texttt{'1'}.
+
+\subsection*{Question 4 — Fonction \texttt{ecriture(fichier\_chaine.txt, fichier.bin)} : bits $\rightarrow$ binaire}
+Nous avons implémenté \texttt{utils/bitwriter.py} : lecture de la chaîne de bits, padding à droite pour obtenir un multiple de 8, conversion par blocs de 8 bits en octets, puis écriture en mode \texttt{wb}. Le résultat est relisible par \texttt{lecture}.
+
+\subsection*{Question 5 — Structures de données et complexités}
+\textbf{Arbre dynamique} : classe \texttt{DynamicHuffmanTree} contenant :
+\begin{itemize}
+  \item \texttt{root} : pointeur vers la racine ;
+  \item \texttt{NYT} : pointeur vers la feuille NYT ;
+  \item \texttt{symbol\_nodes} : dictionnaire \texttt{symbole $\rightarrow$ feuille}.
+\end{itemize}
+\textbf{Complexités} (avec $h$ la hauteur de l'arbre) :
+\begin{itemize}
+  \item test “symbole connu ?” : $O(1)$ via \texttt{symbol\_nodes} ;
+  \item obtention d'un code : $O(h)$ (remontée feuille $\rightarrow$ racine) ;
+  \item mise à jour (remontée + échanges) : au plus $O(h)$ échanges et incrémentations, mais la recherche du chef de bloc est effectuée par un parcours BFS global de l'arbre à chaque niveau ($O(n)$ par appel), ce qui conduit à un coût total de $O(hn)$ pour une mise à jour complète ;
+  \item renumérotation GDBH : BFS $O(n)$.
+\end{itemize}
+
+\subsection*{Question 6 — Structure arborescente et fonction \texttt{finBloc}}
+\textbf{Structure} :
+\begin{itemize}
+  \item \texttt{LeafNode} (symbole ou NYT) ;
+  \item \texttt{InternalNode} (deux enfants) ;
+  \item \texttt{NodeBase} (poids, parent, identifiant GDBH).
+\end{itemize}
+
+\textbf{finBloc} : dans notre code, l'équivalent opérationnel de \texttt{finBloc(H,m)} est \texttt{find\_block\_leader(tree, node)} : on cherche, parmi les nœuds de même poids, celui d'identifiant GDBH maximal (fin du bloc). Cette recherche est réalisée par parcours BFS de l'arbre.
+
+\subsection*{Question 7 — Tests compression/décompression}
+Nous validons la correction par tests de \textbf{round-trip} : compression puis décompression, et comparaison \textbf{octet à octet} entre l'entrée et la sortie.
+
+Le script \texttt{python -m tests.test\_roundtrip\_basic} exécute ces tests sur les fichiers présents dans \texttt{io/input/} et produit un CSV de résultats dans \texttt{tests/compression\_report.csv}.
+
+\subsection*{Question 8 — Expériences sur texte naturel (ex. Gutenberg)}
+Nous avons utilisé des textes issus de Project Gutenberg, par exemple \texttt{io/input/Blaise\_Pascal.txt}, ainsi que \texttt{io/input/gutenberg\_small\_fr.txt}. Les mesures de taille/ratio/temps sont collectées automatiquement.
+
+\subsection*{Question 9 — Expériences sur fichiers aléatoires (distribution contrôlée)}
+Nous avons testé :
+\begin{itemize}
+  \item \texttt{io/input/random\_uniform\_letters.txt} : distribution quasi uniforme des lettres ;
+  \item \texttt{io/input/random\_biased\_letters.txt} : distribution biaisée (beaucoup de \texttt{A}, puis \texttt{B}, etc.).
+\end{itemize}
+Ces fichiers permettent d'observer l'effet direct de la distribution sur la longueur moyenne des codes.
+
+\subsection*{Question 10 — Expériences sur fichiers “informatifs” non langue naturelle}
+Nous avons testé :
+\begin{itemize}
+  \item \texttt{io/input/data\_json\_sample.txt} (JSON),
+  \item \texttt{io/input/code\_python\_sample.txt} (code Python),
+  \item \texttt{io/input/json\_like\_config.txt} (config).
+\end{itemize}
+
+\subsection*{Question 11 — Analyse expérimentale}
+Le tableau \ref{tab:results} synthétise les résultats observés (issus de \texttt{tests/compression\_report.csv}).
+
+\begin{table}[H]
+\centering
+\caption{Résultats expérimentaux (extraits)}
+\label{tab:results}
+\begin{tabular}{lrrrr}
+\toprule
+Fichier & Taille orig. (o) & Taille .huff (o) & Ratio & Remarque \\
+\midrule
+Blaise\_Pascal.txt & 120304 & 70654 & 0.5873 & Texte naturel long \\
+random\_biased\_letters.txt & 414 & 90 & 0.2174 & Distribution très biaisée \\
+random\_uniform\_letters.txt & 660 & 436 & 0.6606 & Uniforme, gain limité \\
+short.txt & 3 & 12 & 4.0000 & Overhead + en-tête 64 bits \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Analyse :
+\begin{itemize}
+  \item \textbf{Petits fichiers} : expansion fréquente (en-tête 64 bits + premières occurrences via NYT + padding).
+  \item \textbf{Fichiers biaisés} : forte compression car un symbole dominant reçoit un code très court.
+  \item \textbf{Uniforme} : gain plus faible car les fréquences sont proches (codes de longueurs proches).
+  \item \textbf{Textes naturels} : ratios plausibles ($<1$) et relativement stables quand la taille augmente.
+\end{itemize}
+
+\section{Format du rendu (scripts + logs)}
+Deux scripts Bash sont fournis à la racine :
+\begin{itemize}
+  \item \texttt{./compresser <input.txt> <output.huff>} ;
+  \item \texttt{./decompresser <input.huff> <output.txt>}.
+\end{itemize}
+Ils appellent \texttt{compresser.py} et \texttt{decompresser.py}. À chaque exécution, une ligne est ajoutée dans \texttt{compression.txt} et \texttt{decompression.txt} au format :
+\begin{center}
+\texttt{input\_path;output\_path;input\_bytes;output\_bytes;ratio;time\_ms}.
+\end{center}
+
+\section{Usage d'IA générative (obligatoire)}
+
+Nous avons utilisé une IA générative comme outil d'assistance pour :
+\begin{itemize}
+  \item clarifier certaines parties de l'énoncé et du cours (FGK/Vitter, propriétés de l'AHA) ;
+  \item aider à la structuration du rapport et à la reformulation de certaines explications ;
+  \item identifier et corriger des erreurs techniques (scripts Bash, encodage UTF-8, gestion des bits).
+\end{itemize}
+
+\textbf{Analyse critique.}
+Les propositions de l'IA ont systématiquement été vérifiées et adaptées. En particulier, une attention particulière a été portée à la distinction entre caractères UTF-8 et octets, ainsi qu'au respect strict des propriétés théoriques de l'algorithme de Huffman dynamique.
+
+\textbf{Estimation quantitative.}
+La proportion de code généré ou modifié avec l'aide de l'IA est estimée à environ \textbf{15\,\%}, et la proportion du texte du rapport influencée par l'IA à environ \textbf{25\,\%}.
+
+
+\section{Conclusion}
+Nous avons implémenté un compresseur et un décompresseur basés sur l'algorithme de Huffman dynamique (FGK/Vitter), opérant au niveau octet et respectant les conventions de bits et le format d'exécution imposés. Les tests de round-trip valident la correction fonctionnelle, et l'étude expérimentale met en évidence l'influence de la distribution des symboles ainsi que l'overhead induit sur les fichiers de petite taille.
+
+Des améliorations futures pourraient inclure une gestion plus efficace des blocs de poids afin de réduire la complexité des mises à jour, ainsi qu'un traitement symbolique au niveau UTF-8 pour améliorer la compression sur des textes multilingues.
+
+\end{document}
